@@ -28,9 +28,6 @@
     "transpile:node:js": "npx babel src -d lib --copy-files",
     "transpile:node:ts": "npx babel src -d lib --copy-files --extensions '.ts'",
     "clean:lib:ts": "rimraf lib/\"**\"/*.ts",
-    "lint": "npm run lint:js && npm run lint:ts",
-    "lint:js": "semistandard --verbose | snazzy",
-    "lint:ts": "eslint . --ext .ts",
     "semantic-release": "semantic-release",
     "prepare": "husky install"
   },
@@ -38,7 +35,10 @@
     "access": "public"
   },
   "author": "Kim Duffy",
-  "contributors": ["Matthieu Collé", "Julien Fraichot"],
+  "contributors": [
+    "Matthieu Collé",
+    "Julien Fraichot"
+  ],
   "license": "MIT",
   "semistandard": {
     "globals": [
@@ -78,20 +78,10 @@
     "@types/jest": "^26.0.4",
     "@types/node": "^15.0.1",
     "@types/sinon": "^10.0.0",
-    "@typescript-eslint/eslint-plugin": "^4.16.1",
-    "@typescript-eslint/parser": "^4.16.1",
     "babel-jest": "^26.0.1",
     "body-parser": "^1.19.0",
     "brfs": "^2.0.2",
     "codecov": "^3.0.4",
-    "eslint": "^7.21.0",
-    "eslint-config-semistandard": "^15.0.0",
-    "eslint-config-standard": "^16.0.2",
-    "eslint-config-standard-with-typescript": "^20.0.0",
-    "eslint-plugin-import": "^2.20.2",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-standard": "^5.0.0",
     "express": "^4.17.1",
     "husky": "^6.0.0",
     "jasmine-core": "^3.5.0",
@@ -116,7 +106,6 @@
     "rollup-plugin-terser": "^7.0.0",
     "rollup-plugin-typescript": "^1.0.1",
     "semantic-release": "^17.0.2",
-    "semistandard": "^16.0.0",
     "sinon": "^10.0.0",
     "snazzy": "^9.0.0",
     "ts-jest": "^26.5.5",

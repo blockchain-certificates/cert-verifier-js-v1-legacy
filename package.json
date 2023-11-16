@@ -27,6 +27,7 @@
     "transpile:node": "npm run transpile:node:ts && npm run transpile:node:js && npm run clean:lib:ts",
     "transpile:node:js": "npx babel src -d lib --copy-files",
     "transpile:node:ts": "npx babel src -d lib --copy-files --extensions '.ts'",
+    "transpile:mocks:iife": "rollup -c test/build/scripts/rollup.mocks.config.mjs",
     "clean:lib:ts": "rimraf lib/\"**\"/*.ts",
     "lint": "npm run lint:js && npm run lint:ts",
     "lint:js": "semistandard --verbose | snazzy",

@@ -63,12 +63,14 @@ const fixtureV1 = {
   '@context': 'https://w3id.org/blockcerts/v1'
 };
 
+// @ts-expect-error we just mock the thing
+window.XMLHttpRequest = mockXHR.FakeXmlHttpRequest;
+
 describe('verifier build test suite', function () {
   it('works as expected with a v1 certificate', async function () {
     const certificate = new Verifier.Certificate(fixtureV1);
     await certificate.init();
     const result = await certificate.verify();
-    expect(result.status).toBe('failure');
-    expect(result.message).toBe('The address used to issue this Blockcerts does not belong to the claimed issuer.');
+    expect(result.status).toBe('success');
   });
 });

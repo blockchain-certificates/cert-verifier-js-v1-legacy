@@ -13,7 +13,7 @@
     "copy:declaration": "cp src/index.d.ts dist/index.d.ts",
     "test": "jest",
     "test:build": "npm run test:build:esm && npm run test:build:iife",
-    "test:build:esm": "jest --testRegex \"/*(.test.build.js)\" --runInBand --silent",
+    "test:build:esm": "jest --testRegex \"/*(.test.build.js)\" --runInBand",
     "test:build:iife": "karma start --single-run",
     "test:manual:browser": "rollup -c test/manual-testing/browser/rollup.config.js",
     "test:manual:node:server": "nodemon test/manual-testing/node/server.js",
@@ -27,18 +27,23 @@
     "transpile:node": "npm run transpile:node:ts && npm run transpile:node:js && npm run clean:lib:ts",
     "transpile:node:js": "npx babel src -d lib --copy-files",
     "transpile:node:ts": "npx babel src -d lib --copy-files --extensions '.ts'",
+    "transpile:mocks:iife": "rollup -c test/build/scripts/rollup.mocks.config.mjs",
     "clean:lib:ts": "rimraf lib/\"**\"/*.ts",
     "lint": "npm run lint:js && npm run lint:ts",
     "lint:js": "semistandard --verbose | snazzy",
     "lint:ts": "eslint . --ext .ts",
     "semantic-release": "semantic-release",
+    "postinstall": "rimraf node_modules/jsonld/node_modules/xmldom && rimraf node_modules/rdf-canonize/node_modules/node-forge && rimraf node_modules/request/node_modules/tough-cookie",
     "prepare": "husky install"
   },
   "publishConfig": {
     "access": "public"
   },
   "author": "Kim Duffy",
-  "contributors": ["Matthieu Collé", "Julien Fraichot"],
+  "contributors": [
+    "Matthieu Collé",
+    "Julien Fraichot"
+  ],
   "license": "MIT",
   "semistandard": {
     "globals": [
@@ -63,7 +68,10 @@
     "ecurve": "^1.0.4",
     "jsonld": "^1.8.1",
     "lodash.clonedeep": "^4.5.0",
+    "node-forge": "^1.3.1",
     "sha256": "^0.2.0",
+    "tough-cookie": "^4.1.3",
+    "xmldom": "npm:@xmldom/xmldom@^0.8.10",
     "xmlhttprequest": "^1.8.0"
   },
   "devDependencies": {
@@ -95,7 +103,7 @@
     "express": "^4.17.1",
     "husky": "^6.0.0",
     "jasmine-core": "^3.5.0",
-    "jest": "^25.1.0",
+    "jest": "^26.6.3",
     "karma": "^6.0.0",
     "karma-chrome-launcher": "^3.1.0",
     "karma-firefox-launcher": "^2.1.0",

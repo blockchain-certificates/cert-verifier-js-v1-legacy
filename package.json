@@ -32,13 +32,17 @@
     "lint:js": "semistandard --verbose | snazzy",
     "lint:ts": "eslint . --ext .ts",
     "semantic-release": "semantic-release",
+    "postinstall": "rimraf node_modules/jsonld/node_modules/xmldom",
     "prepare": "husky install"
   },
   "publishConfig": {
     "access": "public"
   },
   "author": "Kim Duffy",
-  "contributors": ["Matthieu Collé", "Julien Fraichot"],
+  "contributors": [
+    "Matthieu Collé",
+    "Julien Fraichot"
+  ],
   "license": "MIT",
   "semistandard": {
     "globals": [
@@ -64,6 +68,7 @@
     "jsonld": "^1.8.1",
     "lodash.clonedeep": "^4.5.0",
     "sha256": "^0.2.0",
+    "xmldom": "npm:@xmldom/xmldom@^0.8.10",
     "xmlhttprequest": "^1.8.0"
   },
   "devDependencies": {

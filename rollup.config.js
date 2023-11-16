@@ -5,7 +5,7 @@ import typescript from 'rollup-plugin-typescript';
 import replace from 'rollup-plugin-re';
 import builtins from 'rollup-plugin-node-builtins';
 import globals from 'rollup-plugin-node-globals';
-// import { terser } from 'rollup-plugin-terser';
+import { terser } from 'rollup-plugin-terser';
 
 export default {
   input: 'src/index.js',
@@ -73,7 +73,7 @@ export default {
     }),
     json(),
     globals(),
-    builtins()
-    // terser()
+    builtins(),
+    terser()
   ]
 };

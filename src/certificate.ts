@@ -10,6 +10,7 @@ import { deepCopy } from './helpers/object';
 import { TExplorerParsingFunction } from '@blockcerts/explorer-lookup';
 import { Issuer } from './models/Issuer';
 import { ProofValue } from './models/MerkleProof2019';
+import { IVerificationMapItem } from './models/VerificationMap';
 
 export interface ExplorerURLs {
   main: string;
@@ -71,7 +72,7 @@ export default class Certificate {
   public subtitle?: string; // v1
   public transactionId: string;
   public transactionLink: string;
-  public verificationSteps: any[]; // TODO: define verificationSteps interface.
+  public verificationSteps: IVerificationMapItem[];
   public version: Versions;
   public verifier: Verifier;
 
@@ -94,17 +95,6 @@ export default class Certificate {
   async init (): Promise<void> {
     // Parse certificate
     await this.parseJson(this.certificateJson);
-  }
-
-  async parseJson (certificateDefinition): Promise<void> {
-    const parsedCertificate: ParsedCertificate = await parseJSON(certificateDefinition);
-    if (!parsedCertificate.isFormatValid) {
-      throw new Error(parsedCertificate.error);
-    }
-    this._setProperties(parsedCertificate);
-  }
-
-  async verify (stepCallback?: IVerificationStepCallbackFn): Promise<IFinalVerificationStatus> {
     this.verifier = new Verifier({
       certificateJson: this.certificateJson,
       chain: this.chain,
@@ -117,23 +107,26 @@ export default class Certificate {
       version: this.version,
       explorerAPIs: deepCopy<ExplorerAPI[]>(this.explorerAPIs)
     });
-    await this.verifier.verify(stepCallback);
+    await this.verifier.init();
+    this.verificationSteps = this.verifier.getVerificationSteps();
+  }
+
+  async parseJson (certificateDefinition): Promise<void> {
+    const parsedCertificate: ParsedCertificate = await parseJSON(certificateDefinition);
+    if (!parsedCertificate.isFormatValid) {
+      throw new Error(parsedCertificate.error);
+    }
+    this._setProperties(parsedCertificate);
+  }
+
+  async verify (stepCallback?: IVerificationStepCallbackFn): Promise<IFinalVerificationStatus> {
+    const result = await this.verifier.verify(stepCallback);
     this.setSigners();
+    return result;
   }
 
   private setSigners (): void {
-    this.signers = [{
-      signingDate: this.verifier.txData.time as string, // make a getter
-      signatureSuiteType: this.receipt.type,
-      issuerPublicKey: this.verifier.txData.issuingAddress,
-      issuerName: this.issuer.name,
-      issuerProfileDomain: this.issuer.url,
-      issuerProfileUrl: this.issuer.id,
-      chain: this.chain,
-      transactionId: this.transactionId,
-      transactionLink: this.transactionLink,
-      rawTransactionLink: this.rawTransactionLink
-    }];
+    this.signers = this.verifier.getSignersData();
   }
 
   _setOptions (options): void {

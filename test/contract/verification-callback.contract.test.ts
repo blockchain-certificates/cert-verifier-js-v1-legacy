@@ -1,4 +1,5 @@
 import sinon from 'sinon';
+import * as domainVerifier from '../../src/domain/verifier/useCases';
 import * as ExplorerLookup from '@blockcerts/explorer-lookup';
 import { Certificate, VERIFICATION_STATUSES } from '../../src';
 import type { IVerificationStepCallbackAPI } from '../../src/verifier';
@@ -8,7 +9,7 @@ import fixtureIssuerProfile from '../fixtures/v1/got-issuer_live.json';
 describe('when the certificate verified', function () {
   beforeEach(function () {
     const requestStub = sinon.stub(ExplorerLookup, 'request');
-    const lookForTxStub = sinon.stub(ExplorerLookup, 'lookForTx');
+    const lookForTxStub = sinon.stub(domainVerifier, 'lookForTx');
     requestStub.withArgs({
       url: 'http://www.blockcerts.org/mockissuer/issuer/got-issuer_live.json'
     }).resolves(JSON.stringify(fixtureIssuerProfile));

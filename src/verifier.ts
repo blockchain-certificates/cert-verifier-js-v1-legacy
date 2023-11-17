@@ -1,29 +1,46 @@
-import { STEPS, SUB_STEPS, VERIFICATION_STATUSES } from './constants';
-import debug from 'debug';
-import VerifierError from './models/verifierError';
 import domain from './domain';
-import * as inspectors from './inspectors';
 import { BlockcertsV1 } from './models/BlockcertsV1';
 import { IBlockchainObject } from './constants/blockchains';
 import { ExplorerAPI, TransactionData } from '@blockcerts/explorer-lookup';
 import { Issuer, IssuerPublicKeyList } from './models/Issuer';
 import Versions from './constants/certificateVersions';
-
-const log = debug('Verifier');
+import { VerificationSteps, SUB_STEPS } from './constants/verificationSteps';
+import { Suite, SuiteAPI } from './models/Suite';
+import { VERIFICATION_STATUSES } from './constants/verificationStatuses';
+import type { IVerificationMapItem, IVerificationMapItemSuite } from './models/VerificationMap';
+import type { Receipt } from './models/Receipt';
+import { difference } from './helpers/array';
+import VerificationSubstep from './domain/verifier/valueObjects/VerificationSubstep';
+import { ensureNotExpired } from './inspectors';
+import { MerkleProof2017 } from './models/MerkleProof2017';
+import type { Signers } from './certificate';
 
 export interface IVerificationStepCallbackAPI {
   code: string;
   label: string;
-  status: string; // TODO: use enum
+  status: VERIFICATION_STATUSES;
   errorMessage?: string;
+  parentStep: string;
 }
 
 export type IVerificationStepCallbackFn = (update: IVerificationStepCallbackAPI) => any;
+type TVerifierProofMap = Map<number, Receipt>;
 
 export interface IFinalVerificationStatus {
-  code: STEPS.final;
-  status: string; // TODO: use enum
+  code: VerificationSteps.final;
+  status: VERIFICATION_STATUSES;
   message: string;
+}
+
+interface StepVerificationStatus {
+  code: string;
+  status: VERIFICATION_STATUSES;
+  message?: string;
+}
+
+export enum SupportedVerificationSuites {
+  MerkleProof2017 = 'MerkleProof2017',
+  ChainpointSHA256v2 = 'ChainpointSHA256v2'
 }
 
 export default class Verifier {
@@ -37,10 +54,20 @@ export default class Verifier {
   public transactionId: string;
   public documentToVerify: BlockcertsV1; // TODO: confirm this
   public explorerAPIs: ExplorerAPI[];
-  private readonly _stepsStatuses: any[]; // TODO: define stepStatus interface
-  private localHash: string;
-  private txData: TransactionData;
-  private issuerPublicKeyList: IssuerPublicKeyList;
+  private readonly localHash: string;
+  private readonly txData: TransactionData;
+  private readonly issuerPublicKeyList: IssuerPublicKeyList;
+  private _stepsStatuses: StepVerificationStatus[] = [];
+
+  public proofMap: TVerifierProofMap;
+  public verificationSteps: IVerificationMapItem[];
+  public supportedVerificationSuites: { [key in SupportedVerificationSuites]: Suite } = {
+    [SupportedVerificationSuites.MerkleProof2017]: null,
+    [SupportedVerificationSuites.ChainpointSHA256v2]: null
+  }; // defined here to later check if the proof type of the document is supported for verification
+
+  public proofVerifiers: Suite[] = [];
+  public verificationProcess: SUB_STEPS[];
 
   constructor (
     { certificateJson, chain, expires, id, issuer, receipt, revocationKey, transactionId, version, explorerAPIs }: {
@@ -56,42 +83,42 @@ export default class Verifier {
       explorerAPIs?: ExplorerAPI[];
     }
   ) {
-    this.chain = chain;
     this.expires = expires;
     this.id = id;
     this.issuer = issuer;
-    this.receipt = receipt;
     this.revocationKey = revocationKey;
-    this.version = version;
-    this.transactionId = transactionId;
     this.explorerAPIs = explorerAPIs;
 
-    let document = certificateJson.document;
-    if (!document) {
-      document = this._retrieveDocumentBeforeIssuance(certificateJson);
+    this.documentToVerify = Object.assign<any, BlockcertsV1>({}, certificateJson);
+  }
+
+  getVerificationSteps (): IVerificationMapItem[] {
+    return this.verificationSteps;
+  }
+
+  async init (): Promise<void> {
+    await this.instantiateProofVerifiers();
+    this.prepareVerificationProcess();
+  }
+
+  async verifyProof (): Promise<void> {
+    for (let i = 0; i < this.proofVerifiers.length; i++) {
+      await this.proofVerifiers[i].verifyProof();
     }
-
-    this.documentToVerify = Object.assign({}, document);
-
-    // Final verification result
-    // Init status as success, we will update the final status at the end
-    this._stepsStatuses = [];
   }
 
   async verify (stepCallback: IVerificationStepCallbackFn = () => {}): Promise<IFinalVerificationStatus> {
     this._stepCallback = stepCallback;
+    this._stepsStatuses = [];
 
-    if (this.version === Versions.V1_1) {
-      throw new VerifierError(
-        '',
-        'Verification of 1.1 certificates is not supported by this component. See the python cert-verifier for legacy verification'
-      );
-    }
+    await this.verifyProof();
 
-    if (domain.chains.isMockChain(this.chain)) {
-      await this._verifyV2Mock();
-    } else {
-      await this._verifyMain();
+    for (const verificationStep of this.verificationProcess) {
+      if (!this[verificationStep]) {
+        console.error('verification logic for', verificationStep, 'not implemented');
+        return;
+      }
+      await this[verificationStep]();
     }
 
     // Send final callback update for global verification status
@@ -99,41 +126,144 @@ export default class Verifier {
     return erroredStep ? this._failed(erroredStep) : this._succeed();
   }
 
-  _getRevocationListUrl (distantIssuerProfile: Issuer): any { // TODO: define revocationList type
-    if (this.issuer?.revocationList) {
-      return this.issuer.revocationList;
-    }
-    return distantIssuerProfile.revocationList;
+  getSignersData (): Signers[] {
+    return this.proofVerifiers.map(proofVerifier => ({
+      signingDate: proofVerifier.getSigningDate(),
+      signatureSuiteType: proofVerifier.getProofType(),
+      issuerPublicKey: proofVerifier.getIssuerPublicKey(),
+      issuerName: proofVerifier.getIssuerName(),
+      issuerProfileDomain: proofVerifier.getIssuerProfileDomain(),
+      issuerProfileUrl: proofVerifier.getIssuerProfileUrl(),
+      chain: proofVerifier.getChain?.(),
+      transactionId: proofVerifier.getTransactionIdString?.(),
+      transactionLink: proofVerifier.getTransactionLink?.(),
+      rawTransactionLink: proofVerifier.getRawTransactionLink?.()
+    }));
   }
 
-  private async _doAction (step: string, action: () => any): Promise<any> {
-    // If not failing already
+  private getProofMap (document: BlockcertsV1): TVerifierProofMap {
+    const proofMap = new Map();
+    if ('signature' in document) {
+      proofMap.set(0, document.signature);
+    } else if ('receipt' in document) {
+      proofMap.set(0, document.receipt);
+    }
+    return proofMap;
+  }
+
+  private getProofTypes (): string[] {
+    const proofTypes: string[] = [];
+    this.proofMap.forEach(proof => {
+      let { type } = proof;
+      if (Array.isArray(type)) {
+        // Blockcerts v2/MerkleProof2017
+        type = type[0] as unknown as string[];
+      }
+      proofTypes.push(type as unknown as string);
+    });
+
+    return proofTypes;
+  }
+
+  private async instantiateProofVerifiers (): Promise<void> {
+    this.proofMap = this.getProofMap(this.documentToVerify);
+    const proofTypes: string[] = this.getProofTypes();
+
+    const unsupportedVerificationSuites = difference(Object.keys(this.supportedVerificationSuites), proofTypes);
+
+    if (unsupportedVerificationSuites.length) {
+      throw new Error(`No support for proof verification of type: ${unsupportedVerificationSuites.join(', ')}`);
+    }
+
+    // we have checked and now know the types of proof are supported, mutation is ok
+    await this.loadRequiredVerificationSuites(proofTypes as SupportedVerificationSuites[]);
+
+    this.proofMap.forEach((proof, index) => {
+      const suiteOptions: SuiteAPI = {
+        executeStep: this.executeStep.bind(this),
+        document: this.documentToVerify,
+        proof: proof as MerkleProof2017,
+        explorerAPIs: this.explorerAPIs,
+        issuer: this.issuer
+      };
+
+      this.proofVerifiers.push(new this.supportedVerificationSuites[proofTypes[index]](suiteOptions));
+    });
+
+    for (const proofVerifierSuite of this.proofVerifiers) {
+      await proofVerifierSuite.init();
+    }
+  }
+
+  private async loadRequiredVerificationSuites (documentProofTypes: SupportedVerificationSuites[]): Promise<void> {
+    if (documentProofTypes.includes(SupportedVerificationSuites.MerkleProof2017)) {
+      const { default: MerkleProof2017VerificationSuite } = await import('./suites/MerkleProof2017');
+      this.supportedVerificationSuites.MerkleProof2017 = MerkleProof2017VerificationSuite as unknown as Suite;
+    }
+
+    if (documentProofTypes.includes(SupportedVerificationSuites.ChainpointSHA256v2)) {
+      const { default: MerkleProof2017VerificationSuite } = await import('./suites/MerkleProof2017');
+      this.supportedVerificationSuites.ChainpointSHA256v2 = MerkleProof2017VerificationSuite as unknown as Suite;
+    }
+  }
+
+  private prepareVerificationProcess (): void {
+    const verificationModel = domain.certificates.getVerificationMap();
+    this.verificationSteps = verificationModel.verificationMap;
+    this.verificationProcess = verificationModel.verificationProcess;
+
+    this.registerSignatureVerificationSteps();
+
+    this.verificationSteps = this.verificationSteps.filter(parentStep =>
+      parentStep.subSteps?.length > 0 || parentStep.suites?.some(suite => suite.subSteps.length > 0)
+    );
+  }
+
+  private registerSignatureVerificationSteps (): void {
+    const parentStep = VerificationSteps.proofVerification;
+    this.verificationSteps
+      .find(step => step.code === parentStep)
+      .suites = this.getSuiteSubsteps(parentStep);
+  }
+
+  private getSuiteSubsteps (parentStep: VerificationSteps): IVerificationMapItemSuite[] {
+    const targetMethodMap = {
+      [VerificationSteps.proofVerification]: 'getProofVerificationSteps'
+    };
+    return this.proofVerifiers.map(proofVerifier => ({
+      proofType: proofVerifier.type,
+      subSteps: proofVerifier[targetMethodMap[parentStep]](parentStep)
+    }));
+  }
+
+  private getRevocationListUrl (): string {
+    return this.issuer.revocationList;
+  }
+
+  private async executeStep (step: string, action: () => any, verificationSuite?: string): Promise<any> {
     if (this._isFailing()) {
       return;
     }
 
-    let label: string;
     if (step) {
-      label = domain.i18n.getText('subSteps', `${step}LabelPending`);
-      log(label);
-      this._updateStatusCallback(step, label, VERIFICATION_STATUSES.STARTING);
+      this._updateStatusCallback(step, VERIFICATION_STATUSES.STARTING, verificationSuite);
     }
 
     try {
       const res: any = await action();
       if (step) {
-        this._updateStatusCallback(step, label, VERIFICATION_STATUSES.SUCCESS);
-        this._stepsStatuses.push({ step, label, status: VERIFICATION_STATUSES.SUCCESS });
+        this._updateStatusCallback(step, VERIFICATION_STATUSES.SUCCESS, verificationSuite);
+        this._stepsStatuses.push({ code: step, status: VERIFICATION_STATUSES.SUCCESS });
       }
       return res;
     } catch (err) {
+      console.error(err);
       if (step) {
-        this._updateStatusCallback(step, label, VERIFICATION_STATUSES.FAILURE, err.message);
+        this._updateStatusCallback(step, VERIFICATION_STATUSES.FAILURE, verificationSuite, err.message);
         this._stepsStatuses.push({
           code: step,
-          label,
-          status: VERIFICATION_STATUSES.FAILURE,
-          errorMessage: err.message
+          message: err.message,
+          status: VERIFICATION_STATUSES.FAILURE
         });
       }
     }
@@ -143,162 +273,75 @@ export default class Verifier {
     // defined by this.verify interface
   }
 
-  async _verifyMain (): Promise<void> {
-    await this.getTransactionId();
-    await this.computeLocalHash();
-    await this.fetchRemoteHash();
-    await this.getIssuerProfile();
-    await this.parseIssuerKeys();
-    await this.compareHashes();
-    await this.checkMerkleRoot();
-    await this.checkReceipt();
-    await this.checkRevokedStatus();
-    await this.checkAuthenticity();
-    await this.checkExpiresDate();
-  }
-
-  async _verifyV2Mock (): Promise<void> {
-    await this.computeLocalHash();
-    await this.compareHashes();
-    await this.checkReceipt();
-    await this.checkExpiresDate();
-  }
-
-  private async getTransactionId (): Promise<void> {
-    await this._doAction(
-      SUB_STEPS.getTransactionId,
-      () => inspectors.isTransactionIdValid(this.transactionId)
-    );
-  }
-
-  private async computeLocalHash (): Promise<void> {
-    this.localHash = await this._doAction(
-      SUB_STEPS.computeLocalHash,
-      async () => await inspectors.computeLocalHash(this.documentToVerify, this.version)
-    );
-  }
-
-  private async fetchRemoteHash (): Promise<void> {
-    this.txData = await this._doAction(
-      SUB_STEPS.fetchRemoteHash,
-      async () => await domain.verifier.lookForTx({
-        transactionId: this.transactionId,
-        chain: this.chain.code,
-        explorerAPIs: this.explorerAPIs
-      })
-    );
-  }
-
-  private async getIssuerProfile (): Promise<void> {
-    this.issuer = await this._doAction(
-      SUB_STEPS.getIssuerProfile,
-      async () => await domain.verifier.getIssuerProfile(this.issuer)
-    );
-  }
-
-  private async parseIssuerKeys (): Promise<void> {
-    this.issuerPublicKeyList = await this._doAction(
-      SUB_STEPS.parseIssuerKeys,
-      () => domain.verifier.parseIssuerKeys(this.issuer)
-    );
-  }
-
-  private async compareHashes (): Promise<void> {
-    await this._doAction(SUB_STEPS.compareHashes, () => {
-      inspectors.ensureHashesEqual(this.localHash, this.receipt.targetHash);
-    });
-  }
-
-  private async checkMerkleRoot (): Promise<void> {
-    await this._doAction(SUB_STEPS.checkMerkleRoot, () =>
-      inspectors.ensureMerkleRootEqual(this.receipt.merkleRoot, this.txData.remoteHash)
-    );
-  }
-
-  private async checkReceipt (): Promise<void> {
-    await this._doAction(SUB_STEPS.checkReceipt, () =>
-      inspectors.ensureValidReceipt(this.receipt)
-    );
-  }
-
   private async checkRevokedStatus (): Promise<void> {
-    let keys;
-    let revokedAddresses;
-    if (this.version === Versions.V1_2) {
-      revokedAddresses = this.txData?.revokedAddresses || [];
-      keys = [
-        domain.verifier.parseRevocationKey(this.issuer),
-        this.revocationKey
-      ];
-    } else {
-      // Get revoked assertions
-      revokedAddresses = await this._doAction(
-        null,
-        async () => await domain.verifier.getRevokedAssertions(this._getRevocationListUrl(this.issuer), this.id)
-      );
-      keys = this.id;
+    const revocationListUrl = this.getRevocationListUrl();
+
+    if (!revocationListUrl) {
+      console.warn('No revocation list url was set on the issuer.');
+      await this.executeStep(SUB_STEPS.checkRevokedStatus, () => true);
+      return;
     }
-
-    await this._doAction(SUB_STEPS.checkRevokedStatus, () =>
-      inspectors.ensureNotRevoked(revokedAddresses, keys)
+    const revokedCertificatesIds = await this.executeStep(
+      null,
+      async () => await domain.verifier.getRevokedAssertions(revocationListUrl, this.id)
     );
-  }
 
-  private async checkAuthenticity (): Promise<void> {
-    await this._doAction(SUB_STEPS.checkAuthenticity, () =>
-      inspectors.ensureValidIssuingKey(this.issuerPublicKeyList, this.txData.issuingAddress, this.txData.time)
+    const { default: ensureNotRevoked } = await import('./inspectors/ensureNotRevoked');
+
+    await this.executeStep(SUB_STEPS.checkRevokedStatus, () => { ensureNotRevoked(revokedCertificatesIds, this.id); }
     );
   }
 
   private async checkExpiresDate (): Promise<void> {
-    await this._doAction(SUB_STEPS.checkExpiresDate, () =>
-      inspectors.ensureNotExpired(this.expires)
+    await this.executeStep(SUB_STEPS.checkExpiresDate, () => { ensureNotExpired(this.expires); }
     );
   }
 
-  /**
-   * Returns a failure final step message
-   */
-  _failed (errorStep): IFinalVerificationStatus { // TODO: define errorStep interface
-    const message: string = errorStep.errorMessage;
-    log(`failure:${message}`);
+  private findStepFromVerificationProcess (code: string, verificationSuite: string): VerificationSubstep {
+    return domain.verifier.findVerificationSubstep(code, this.verificationSteps, verificationSuite);
+  }
+
+  private _failed (errorStep: StepVerificationStatus): IFinalVerificationStatus {
+    const { message } = errorStep;
     return this._setFinalStep({ status: VERIFICATION_STATUSES.FAILURE, message });
   }
 
-  /**
-   * whether or not the current verification is failing
-   */
-  _isFailing (): boolean {
+  private _isFailing (): boolean {
     return this._stepsStatuses.some(step => step.status === VERIFICATION_STATUSES.FAILURE);
   }
 
-  _retrieveDocumentBeforeIssuance (certificateJson): any { // TODO: define certificate object
-    const certificateCopy = Object.assign({}, certificateJson);
-    delete certificateCopy.signature;
-    return certificateCopy;
-  }
+  private _succeed (): IFinalVerificationStatus {
+    let message;
 
-  /**
-   * Returns a final success message
-   */
-  _succeed (): IFinalVerificationStatus {
-    const message = domain.chains.isMockChain(this.chain)
-      ? domain.i18n.getText('success', 'mocknet')
-      : domain.i18n.getText('success', 'blockchain');
-    log(message);
+    if (this.proofVerifiers.length === 1) {
+      message = domain.chains.isMockChain(this.proofVerifiers[0].getChain())
+        ? domain.i18n.getText('success', 'mocknet')
+        : domain.i18n.getText('success', 'blockchain');
+    }
+
     return this._setFinalStep({ status: VERIFICATION_STATUSES.SUCCESS, message });
   }
 
-  _setFinalStep ({ status, message }: { status: string; message: string }): IFinalVerificationStatus {
-    return { code: STEPS.final, status, message };
+  private _setFinalStep ({ status, message }: { status: VERIFICATION_STATUSES; message: string }): IFinalVerificationStatus {
+    return { code: VerificationSteps.final, status, message };
   }
 
-  /**
-   * calls the origin callback to update on a step status
-   */
-  private _updateStatusCallback (code: string, label: string, status: string, errorMessage = ''): void {
+  private _updateStatusCallback (code: string, status: VERIFICATION_STATUSES, verificationSuite = '', errorMessage = ''): void {
     if (code != null) {
-      const update: IVerificationStepCallbackAPI = { code, label, status };
+      const step: VerificationSubstep = this.findStepFromVerificationProcess(code, verificationSuite);
+      if (step === undefined) {
+        // TODO: this happens when the verification method references a public key in a hosted issuer profile
+        // TODO: as it is not considered a DID, CVJS does not add an identity verification check
+        // TODO: we should likely enforce identity verification when the verification method is set
+        console.warn('step with code', code, 'was not found for suite', verificationSuite, 'ignoring but you should not.');
+        return;
+      }
+      const update: IVerificationStepCallbackAPI = {
+        code,
+        status,
+        parentStep: step.parentStep,
+        label: step.labelPending
+      };
       if (errorMessage) {
         update.errorMessage = errorMessage;
       }

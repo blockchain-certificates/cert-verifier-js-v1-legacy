@@ -1,29 +1,6 @@
 import { BLOCKCHAINS, IBlockchainObject } from '../../../constants/blockchains';
 import addresses from '../../addresses';
 import { getText } from '../../i18n/useCases';
-import { capitalize } from '../../../helpers/string';
-
-// merkleRoot2019: see https://w3c-dvcg.github.io/lds-merkle-proof-2019/#blockchain-keymap
-function getMerkleRoot2019Chain (anchor): IBlockchainObject {
-  const supportedChainsMap = {
-    btc: {
-      chainName: BLOCKCHAINS.bitcoin.name
-    },
-    eth: {
-      chainName: BLOCKCHAINS.ethmain.name
-    }
-  };
-  const dataArray = anchor.split(':');
-  const chainIndex: number = dataArray.findIndex(data => Object.keys(supportedChainsMap).includes(data));
-  if (chainIndex > -1) {
-    const chainCode = dataArray[chainIndex];
-    const network = dataArray[chainIndex + 1];
-    const chainCodeSignatureValue = supportedChainsMap[chainCode].chainName.toLowerCase() + capitalize(network);
-    return getChainObject(chainCodeSignatureValue);
-  } else {
-    return defaultChainAssumption();
-  }
-}
 
 function defaultChainAssumption (address = ''): IBlockchainObject {
   return addresses.isMainnet(address) ? BLOCKCHAINS.bitcoin : BLOCKCHAINS.testnet;
@@ -56,8 +33,6 @@ export default function getChain (address, signature = null): IBlockchainObject 
     if (anchor.chain) {
       const chainCodeSignatureValue = anchor.chain;
       return getChainObject(chainCodeSignatureValue);
-    } else if (typeof anchor === 'string') {
-      return getMerkleRoot2019Chain(anchor);
     }
   }
 

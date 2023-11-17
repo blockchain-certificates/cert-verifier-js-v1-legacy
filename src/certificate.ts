@@ -25,6 +25,19 @@ export interface ExplorerAPI {
   keyPropertyName?: string; // the name of the property
 }
 
+export interface Signers {
+  chain?: IBlockchainObject;
+  issuerName?: string;
+  issuerProfileDomain?: string;
+  issuerProfileUrl?: string;
+  issuerPublicKey: string;
+  rawTransactionLink?: string;
+  signatureSuiteType: string;
+  signingDate: string;
+  transactionId?: string;
+  transactionLink?: string;
+}
+
 export interface CertificateOptions {
   locale?: string;
   explorerAPIs?: ExplorerAPI[];
@@ -50,6 +63,7 @@ export default class Certificate {
   public receipt: ProofValue | any; // TODO: define receipt interface for v1, v2
   public recipientFullName: string;
   public recordLink: string;
+  public signers: Signers[] = [];
   public revocationKey: string;
   public sealImage?: string; // v1
   public signature?: string; // v1
@@ -59,6 +73,7 @@ export default class Certificate {
   public transactionLink: string;
   public verificationSteps: any[]; // TODO: define verificationSteps interface.
   public version: Versions;
+  public verifier: Verifier;
 
   constructor (certificateDefinition: BlockcertsV1 | string, options: CertificateOptions = {}) {
     // Options
@@ -90,7 +105,7 @@ export default class Certificate {
   }
 
   async verify (stepCallback?: IVerificationStepCallbackFn): Promise<IFinalVerificationStatus> {
-    const verifier = new Verifier({
+    this.verifier = new Verifier({
       certificateJson: this.certificateJson,
       chain: this.chain,
       expires: this.expires,
@@ -102,7 +117,23 @@ export default class Certificate {
       version: this.version,
       explorerAPIs: deepCopy<ExplorerAPI[]>(this.explorerAPIs)
     });
-    return await verifier.verify(stepCallback);
+    await this.verifier.verify(stepCallback);
+    this.setSigners();
+  }
+
+  private setSigners (): void {
+    this.signers = [{
+      signingDate: this.verifier.txData.time as string, // make a getter
+      signatureSuiteType: this.receipt.type,
+      issuerPublicKey: this.verifier.txData.issuingAddress,
+      issuerName: this.issuer.name,
+      issuerProfileDomain: this.issuer.url,
+      issuerProfileUrl: this.issuer.id,
+      chain: this.chain,
+      transactionId: this.transactionId,
+      transactionLink: this.transactionLink,
+      rawTransactionLink: this.rawTransactionLink
+    }];
   }
 
   _setOptions (options): void {

@@ -11,7 +11,6 @@ describe('verifier build test suite', function () {
     const certificate = new verifier.Certificate(FIXTURES.TestnetV1Valid);
     await certificate.init();
     const result = await certificate.verify();
-    console.log(result);
     expect(result.status).toBe(VERIFICATION_STATUSES.SUCCESS);
   });
 });

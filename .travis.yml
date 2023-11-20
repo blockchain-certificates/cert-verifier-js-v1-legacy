@@ -3,6 +3,8 @@ dist: focal
 branches:
   only:
     - master
+install:
+  - npm ci --force
 before_script:
   - npm run test
   - npm run lint

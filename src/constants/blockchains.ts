@@ -13,6 +13,9 @@ export enum SupportedChains {
 
 export {
   BLOCKCHAINS,
-  isTestChain,
+  isTestChain
+};
+
+export type {
   IBlockchainObject
 };

@@ -25,7 +25,7 @@ export interface Signers {
   transactionLink?: string;
 }
 
-export {
+export type {
   ExplorerAPI
 };
 

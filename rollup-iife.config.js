@@ -14,7 +14,10 @@ export default {
     {
       file: 'dist/verifier-iife.js',
       format: 'iife',
-      name: 'Verifier'
+      name: 'Verifier',
+      generatedCode: 'es2015',
+      interop: 'auto',
+      inlineDynamicImports: true
     }
   ],
   plugins: [

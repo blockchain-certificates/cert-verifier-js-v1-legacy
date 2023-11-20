@@ -1,10 +1,26 @@
 import FIXTURES from '../../fixtures';
 import { BLOCKCHAINS, CERTIFICATE_VERSIONS } from '../../../src/constants';
 import parseJSON from '../../../src/parser';
+import sinon from 'sinon';
+import * as ExplorerLookup from '@blockcerts/explorer-lookup';
+import issuerProfileV1JsonFixture from '../../fixtures/v1/got-issuer_live.json';
 
 const fixture = FIXTURES.TestnetV1Valid;
 
 describe('Parser test suite', function () {
+  let stubRequest;
+
+  beforeEach(function () {
+    stubRequest = sinon.stub(ExplorerLookup, 'request');
+    stubRequest.withArgs({
+      url: 'http://www.blockcerts.org/mockissuer/issuer/got-issuer_live.json'
+    }).resolves(JSON.stringify(issuerProfileV1JsonFixture));
+  });
+
+  afterEach(function () {
+    stubRequest.restore();
+  });
+
   describe('given it is called with a invalid format v2 certificate data', function () {
     it('should set whether or not the certificate format is valid', async function () {
       const fixtureCopy = JSON.parse(JSON.stringify(fixture));
@@ -50,7 +66,7 @@ describe('Parser test suite', function () {
     });
 
     it('should set the issuer of the certificate object', function () {
-      expect(parsedCertificate.issuer).toEqual(fixture.document.certificate.issuer);
+      expect(parsedCertificate.issuer).toEqual(issuerProfileV1JsonFixture);
     });
 
     it('should set the name of the certificate object', function () {

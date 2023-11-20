@@ -1,14 +1,17 @@
 import getIssuerProfile from '../../../../../src/domain/verifier/useCases/getIssuerProfile';
-import * as RequestServices from '../../../../../src/services/request';
-import issuerProfileV1JsonFixture from './fixtures/issuerProfileV1JsonFixture';
+import issuerProfileV1JsonFixture from '../../../../fixtures/v1/got-issuer_live.json';
 import fixtureBlockcertsV1 from '../../../../fixtures/v1/testnet-valid-1.2.json';
 import sinon from 'sinon';
+import * as ExplorerLookup from '@blockcerts/explorer-lookup';
 
 describe('Verifier domain getIssuerProfile use case test suite', function () {
   let stubRequest;
 
   beforeEach(function () {
-    stubRequest = sinon.stub(RequestServices, 'request').resolves(undefined);
+    stubRequest = sinon.stub(ExplorerLookup, 'request');
+    stubRequest.withArgs({
+      url: 'http://www.blockcerts.org/mockissuer/issuer/got-issuer_live.json'
+    }).resolves(JSON.stringify(issuerProfileV1JsonFixture));
   });
 
   afterEach(function () {
@@ -17,6 +20,7 @@ describe('Verifier domain getIssuerProfile use case test suite', function () {
 
   describe('given it is called without an issuerAddress parameter', function () {
     it('should throw an error', async function () {
+      // @ts-expect-error: we are testing an empty case
       await getIssuerProfile().catch(e => {
         expect(e.message).toBe('Unable to get issuer profile - no issuer address given');
       });

@@ -1,18 +1,27 @@
-import fixture from '../../fixtures/v1/testnet-valid-1.2';
+import fixture from '../../fixtures/v1/testnet-valid-1.2.json';
 import { BLOCKCHAINS, Certificate, CERTIFICATE_VERSIONS } from '../../../src';
-import mainnetMapAssertion from '../domain/certificates/useCases/assertions/mainnetMapAssertion';
+import mainnetMapAssertion from '../../assertions/verification-steps-v1-mainnet';
+import sinon from 'sinon';
+import * as ExplorerLookup from '@blockcerts/explorer-lookup';
+import issuerProfileV1JsonFixture from '../../fixtures/v1/got-issuer_live.json';
 
 describe('Certificate entity test suite', function () {
   describe('constructor method', function () {
     describe('given it is called with valid v1 certificate data', function () {
       let certificate;
+      let stubRequest;
 
       beforeEach(async function () {
+        stubRequest = sinon.stub(ExplorerLookup, 'request');
+        stubRequest.withArgs({
+          url: 'http://www.blockcerts.org/mockissuer/issuer/got-issuer_live.json'
+        }).resolves(JSON.stringify(issuerProfileV1JsonFixture));
         certificate = new Certificate(fixture);
         await certificate.init();
       });
 
       afterEach(function () {
+        stubRequest.restore();
         certificate = null;
       });
 
@@ -33,7 +42,7 @@ describe('Certificate entity test suite', function () {
       });
 
       it('should set expires of the certificate object', function () {
-        expect(certificate.expires).toEqual(fixture.expires);
+        expect(certificate.expires).toEqual((fixture as any).expires);
       });
 
       it('should set id of the certificate object', function () {
@@ -45,11 +54,11 @@ describe('Certificate entity test suite', function () {
       });
 
       it('should set issuer of the certificate object', function () {
-        expect(certificate.issuer).toEqual(fixture.document.certificate.issuer);
+        expect(certificate.issuer).toEqual(issuerProfileV1JsonFixture);
       });
 
       it('should set metadataJson of the certificate object', function () {
-        expect(certificate.metadataJson).toEqual(fixture.document.assertion.metadataJson);
+        expect(certificate.metadataJson).toEqual((fixture as any).document.assertion.metadataJson);
       });
 
       it('should set name to the certificate object', function () {
@@ -90,21 +99,7 @@ describe('Certificate entity test suite', function () {
       });
 
       it('should set subtitle to the certificate object', function () {
-        expect(certificate.subtitle).toEqual(fixture.document.certificate.subtitle);
-      });
-
-      it('should set transactionId to the certificate object', function () {
-        expect(certificate.transactionId).toEqual(fixture.receipt.anchors[0].sourceId);
-      });
-
-      it('should set rawTransactionLink to the certificate object', function () {
-        const rawTransactionLinkAssertion = `https://blockchain.info/rawtx/${fixture.receipt.anchors[0].sourceId}`;
-        expect(certificate.rawTransactionLink).toEqual(rawTransactionLinkAssertion);
-      });
-
-      it('should set transactionLink to the certificate object', function () {
-        const transactionLinkAssertion = `https://blockchain.info/tx/${fixture.receipt.anchors[0].sourceId}`;
-        expect(certificate.transactionLink).toEqual(transactionLinkAssertion);
+        expect(certificate.subtitle).toEqual((fixture as any).document.certificate.subtitle);
       });
 
       it('should set verificationSteps to the certificate object', function () {

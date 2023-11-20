@@ -1,30 +1,16 @@
 import domain from './domain';
 import parseJSON, { ParsedCertificate } from './parser';
 import Verifier, { IFinalVerificationStatus, IVerificationStepCallbackFn } from './verifier';
-import { DEFAULT_OPTIONS, TRANSACTION_APIS } from './constants';
+import { DEFAULT_OPTIONS } from './constants';
 import currentLocale from './constants/currentLocale';
 import { BlockcertsV1 } from './models/BlockcertsV1';
 import { IBlockchainObject } from './constants/blockchains';
 import Versions from './constants/certificateVersions';
 import { deepCopy } from './helpers/object';
-import { TExplorerParsingFunction } from '@blockcerts/explorer-lookup';
+import type { ExplorerAPI } from '@blockcerts/explorer-lookup';
 import { Issuer } from './models/Issuer';
 import { ProofValue } from './models/MerkleProof2019';
 import { IVerificationMapItem } from './models/VerificationMap';
-
-export interface ExplorerURLs {
-  main: string;
-  test: string;
-}
-
-export interface ExplorerAPI {
-  serviceURL?: string | ExplorerURLs;
-  priority?: 0 | 1 | -1; // 0: custom APIs will run before the default APIs, 1: after, -1: reserved to default APIs
-  parsingFunction?: TExplorerParsingFunction;
-  serviceName?: TRANSACTION_APIS; // in case one would want to overload the default explorers
-  key?: string; // the user's own key to the service
-  keyPropertyName?: string; // the name of the property
-}
 
 export interface Signers {
   chain?: IBlockchainObject;
@@ -38,6 +24,10 @@ export interface Signers {
   transactionId?: string;
   transactionLink?: string;
 }
+
+export {
+  ExplorerAPI
+};
 
 export interface CertificateOptions {
   locale?: string;
@@ -185,14 +175,5 @@ export default class Certificate {
     this.verificationSteps = domain.certificates.getVerificationMap(chain);
 
     this.version = version as Versions;
-
-    // Transaction ID, link & raw link
-    this._setTransactionDetails();
-  }
-
-  _setTransactionDetails (): void {
-    this.transactionId = domain.certificates.getTransactionId(this.receipt);
-    this.rawTransactionLink = domain.certificates.getTransactionLink(this.transactionId, this.chain, true);
-    this.transactionLink = domain.certificates.getTransactionLink(this.transactionId, this.chain);
   }
 }

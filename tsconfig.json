@@ -1,14 +1,17 @@
 {
   "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
     "allowSyntheticDefaultImports": true,
     "noImplicitAny": false,
     "target": "ESNext",
     "lib": ["ESNext", "dom"],
+    "importsNotUsedAsValues": "remove",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "moduleResolution": "node",
     "baseUrl": "src",
-    "module": "esnext",
+    "module": "ESNext",
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "sourceMap": true,

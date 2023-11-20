@@ -1,18 +1,18 @@
 import domain from './domain';
-import { BlockcertsV1 } from './models/BlockcertsV1';
-import { IBlockchainObject } from './constants/blockchains';
-import { ExplorerAPI, TransactionData } from '@blockcerts/explorer-lookup';
-import { Issuer, IssuerPublicKeyList } from './models/Issuer';
-import Versions from './constants/certificateVersions';
+import { type BlockcertsV1 } from './models/BlockcertsV1';
+import { type IBlockchainObject } from './constants/blockchains';
+import { type ExplorerAPI, type TransactionData } from '@blockcerts/explorer-lookup';
+import { type Issuer, type IssuerPublicKeyList } from './models/Issuer';
+import type Versions from './constants/certificateVersions';
 import { VerificationSteps, SUB_STEPS } from './constants/verificationSteps';
-import { Suite, SuiteAPI } from './models/Suite';
+import { type Suite, type SuiteAPI } from './models/Suite';
 import { VERIFICATION_STATUSES } from './constants/verificationStatuses';
 import type { IVerificationMapItem, IVerificationMapItemSuite } from './models/VerificationMap';
 import type { Receipt } from './models/Receipt';
 import { difference } from './helpers/array';
-import VerificationSubstep from './domain/verifier/valueObjects/VerificationSubstep';
+import type VerificationSubstep from './domain/verifier/valueObjects/VerificationSubstep';
 import { ensureNotExpired } from './inspectors';
-import { MerkleProof2017 } from './models/MerkleProof2017';
+import { type MerkleProof2017 } from './models/MerkleProof2017';
 import type { Signers } from './certificate';
 
 export interface IVerificationStepCallbackAPI {

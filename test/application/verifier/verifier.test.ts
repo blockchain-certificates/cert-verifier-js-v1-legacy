@@ -3,7 +3,7 @@ import fixture from '../../fixtures/v1/v1.json';
 import { BLOCKCHAINS, CERTIFICATE_VERSIONS, VERIFICATION_STATUSES } from '../../../src';
 import Verifier from '../../../src/verifier';
 import domain from '../../../src/domain';
-import { ExplorerAPI } from 'certificate';
+import { type ExplorerAPI } from 'certificate';
 import * as ExplorerLookup from '@blockcerts/explorer-lookup';
 import issuerProfileV1JsonFixture from '../../fixtures/v1/got-issuer_live.json';
 

@@ -1,16 +1,16 @@
 import domain from './domain';
-import parseJSON, { ParsedCertificate } from './parser';
-import Verifier, { IFinalVerificationStatus, IVerificationStepCallbackFn } from './verifier';
+import parseJSON, { type ParsedCertificate } from './parser';
+import Verifier, { type IFinalVerificationStatus, type IVerificationStepCallbackFn } from './verifier';
 import { DEFAULT_OPTIONS } from './constants';
 import currentLocale from './constants/currentLocale';
-import { BlockcertsV1 } from './models/BlockcertsV1';
-import { IBlockchainObject } from './constants/blockchains';
-import Versions from './constants/certificateVersions';
+import { type BlockcertsV1 } from './models/BlockcertsV1';
+import { type IBlockchainObject } from './constants/blockchains';
+import type Versions from './constants/certificateVersions';
 import { deepCopy } from './helpers/object';
 import type { ExplorerAPI } from '@blockcerts/explorer-lookup';
-import { Issuer } from './models/Issuer';
-import { ProofValue } from './models/MerkleProof2019';
-import { IVerificationMapItem } from './models/VerificationMap';
+import { type Issuer } from './models/Issuer';
+import { type ProofValue } from './models/MerkleProof2019';
+import { type IVerificationMapItem } from './models/VerificationMap';
 
 export interface Signers {
   chain?: IBlockchainObject;
@@ -124,7 +124,7 @@ export default class Certificate {
 
     // Set locale
     this.locale = domain.i18n.ensureIsSupported(this.options.locale === 'auto' ? domain.i18n.detectLocale() : this.options.locale);
-    this.explorerAPIs = this.options.explorerAPIs || [];
+    this.explorerAPIs = this.options.explorerAPIs ?? [];
 
     currentLocale.locale = this.locale;
   }

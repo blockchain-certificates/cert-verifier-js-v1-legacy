@@ -1,8 +1,8 @@
 import domain from '../domain';
 import getSignatureImages from './helpers/getSignatureImage';
 import { CERTIFICATE_VERSIONS } from '../constants';
-import { IBlockchainObject } from '../constants/blockchains';
-import { BlockcertsV1 } from '../models/BlockcertsV1';
+import { type IBlockchainObject } from '../constants/blockchains';
+import { type BlockcertsV1 } from '../models/BlockcertsV1';
 
 /**
  * parseV1
@@ -36,7 +36,7 @@ export default async function parseV1 (certificateJson): Promise<BlockcertsV1> {
   const metadataJson = assertion.metadataJson;
   const recipientFullName = `${recipient.givenName} ${recipient.familyName}`;
   const recordLink = assertion.id;
-  const revocationKey = recipient.revocationKey || null;
+  const revocationKey = recipient.revocationKey ?? null;
   const sealImage = issuerInfo.image;
   const signature = certificateJson.document.signature;
   const signaturesRaw = certificateJson.document?.assertion?.['image:signature'];

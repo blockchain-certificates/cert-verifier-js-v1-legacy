@@ -10,7 +10,7 @@ import { getText } from '../domain/i18n/useCases';
 import { deepCopy } from '../helpers/object';
 
 function setJsonLdDocumentLoader (): any {
-  if (typeof window !== 'undefined' && typeof window.XMLHttpRequest !== 'undefined') {
+  if (typeof window?.XMLHttpRequest !== 'undefined') {
     return jsonld.documentLoaders.xhr();
   }
 
@@ -61,7 +61,7 @@ export default async function computeLocalHash (document, version): Promise<stri
     normalizeArgs.expandContext = expandContext;
   }
 
-  return new Promise((resolve, reject) => {
+  return await new Promise((resolve, reject) => {
     jsonld.normalize(theDocument, normalizeArgs, (err, normalized) => {
       const isErr = !!err;
       if (isErr) {

@@ -1,4 +1,4 @@
-import { BLOCKCHAINS, IBlockchainObject } from '../../../constants/blockchains';
+import { BLOCKCHAINS, type IBlockchainObject } from '../../../constants/blockchains';
 import addresses from '../../addresses';
 import { getText } from '../../i18n/useCases';
 
@@ -26,7 +26,7 @@ function getChainObject (chainCodeSignatureValue): IBlockchainObject {
  * @returns {*}
  */
 export default function getChain (address, signature = null): IBlockchainObject {
-  const cleanedSignature = signature || {};
+  const cleanedSignature = signature ?? {};
   if (cleanedSignature.anchors) {
     const anchors = cleanedSignature.anchors;
     const anchor = anchors[0];

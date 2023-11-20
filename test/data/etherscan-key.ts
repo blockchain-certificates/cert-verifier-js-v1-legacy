@@ -1,5 +1,5 @@
 import { TRANSACTION_APIS } from '../../src/constants/api';
-import { ExplorerAPI } from 'certificate';
+import { type ExplorerAPI } from 'certificate';
 
 const etherscanApiWithKey: ExplorerAPI = {
   serviceName: TRANSACTION_APIS.etherscan,

@@ -1,5 +1,4 @@
 import { versionParserMap } from './parsers';
-import { createWriteStream } from 'fs';
 
 export interface ParsedCertificateValidityFormat {
   isFormatValid: boolean;

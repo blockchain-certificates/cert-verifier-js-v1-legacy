@@ -1,23 +1,24 @@
-import resolve from 'rollup-plugin-node-resolve';
-import commonjs from 'rollup-plugin-commonjs';
-import json from 'rollup-plugin-json';
-import typescript from 'rollup-plugin-typescript';
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
+import json from '@rollup/plugin-json';
+import typescript from '@rollup/plugin-typescript';
 import replace from 'rollup-plugin-re';
 import builtins from 'rollup-plugin-node-builtins';
 import globals from 'rollup-plugin-node-globals';
-import babel from 'rollup-plugin-babel';
 import { terser } from 'rollup-plugin-terser';
 
 export default {
   input: 'src/index.ts',
   output: [
     {
-      file: 'dist/verifier-iife.js',
-      format: 'iife',
-      name: 'Verifier',
-      generatedCode: 'es2015',
-      interop: 'auto',
-      inlineDynamicImports: true
+      dir: 'dist/verifier',
+      format: 'cjs',
+      name: 'Verifier'
+    },
+    {
+      dir: 'dist/verifier-es',
+      format: 'es',
+      name: 'Verifier'
     }
   ],
   plugins: [
@@ -62,31 +63,11 @@ export default {
           replace: 'var version = \'11.0.0\''
         }
       ]
-
     }),
-    commonjs({
-      namedExports: {
-        debug: ['debug'],
-        'bitcoinjs-lib': ['bitcoin'],
-        jsonld: ['jsonld']
-      }
-    }),
+    commonjs(),
     json(),
     globals(),
     builtins(),
-    babel({
-      exclude: 'node_modules/**',
-      runtimeHelpers: true,
-      presets: [['@babel/env', {
-        targets: {
-          ie: '11'
-        },
-        debug: false,
-        useBuiltIns: 'usage',
-        corejs: 3,
-        shippedProposals: true
-      }]]
-    }),
     terser()
   ]
 };

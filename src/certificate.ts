@@ -171,9 +171,6 @@ export default class Certificate {
     this.signatureImage = signatureImage;
     this.subtitle = subtitle;
 
-    // Get the full verification step-by-step map
-    this.verificationSteps = domain.certificates.getVerificationMap(chain);
-
     this.version = version as Versions;
   }
 }

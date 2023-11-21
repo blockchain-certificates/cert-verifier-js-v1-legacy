@@ -14,7 +14,7 @@ const checkAuthenticity = 'checkAuthenticity';
 const checkRevokedStatus = 'checkRevokedStatus';
 const checkExpiresDate = 'checkExpiresDate';
 
-function getTextFor (subStep, status) {
+function getTextFor (subStep, status): string {
   return i18n['en-US'].subSteps[`${subStep}${status}`];
 }
 
@@ -27,7 +27,7 @@ const subStepsMap = {
   [VerificationSteps.statusCheck]: [checkIssuerSignature, checkAuthenticity, checkRevokedStatus, checkExpiresDate]
 };
 
-function generateSubsteps (parentKey) {
+function generateSubsteps (parentKey): any {
   return subStepsMap[parentKey].reduce((acc, curr) => {
     acc[curr] = {
       code: curr,

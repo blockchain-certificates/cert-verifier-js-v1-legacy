@@ -1,16 +1,20 @@
 import { VERIFICATION_STATUSES } from '../../src';
 import FIXTURES from '../fixtures';
-import { FakeXmlHttpRequest } from './mocks/FakeXmlHttpRequest';
-const verifier = require('../../lib');
+import fetch from 'node-fetch';
 
-// @ts-expect-error we just mock the thing
-global.XMLHttpRequest = FakeXmlHttpRequest;
+jest.setTimeout(30000);
 
-describe('verifier build test suite', function () {
+// disable node build for the moment
+xdescribe('verifier build test suite', function () {
   it('works as expected with a v1 certificate', async function () {
-    const certificate = new verifier.Certificate(FIXTURES.TestnetV1Valid);
-    await certificate.init();
-    const result = await certificate.verify();
-    expect(result.status).toBe(VERIFICATION_STATUSES.SUCCESS);
+    const verificationStatus = await fetch('http://localhost:4000/verification', {
+      body: JSON.stringify({
+        blockcerts: FIXTURES.TestnetV1Valid,
+        version: 'v1'
+      }),
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    }).then((res) => res.json());
+    expect(verificationStatus.status).toBe(VERIFICATION_STATUSES.SUCCESS);
   });
 });

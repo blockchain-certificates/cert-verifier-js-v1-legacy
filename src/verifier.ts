@@ -11,7 +11,7 @@ import type { IVerificationMapItem, IVerificationMapItemSuite } from './models/V
 import type { Receipt } from './models/Receipt';
 import { difference } from './helpers/array';
 import type VerificationSubstep from './domain/verifier/valueObjects/VerificationSubstep';
-import { ensureNotExpired } from './inspectors';
+import { ensureNotExpired, ensureNotRevoked } from './inspectors';
 import { type MerkleProof2017 } from './models/MerkleProof2017';
 import type { Signers } from './certificate';
 import MerkleProof2017VerificationSuite from './suites/MerkleProof2017';
@@ -283,8 +283,6 @@ export default class Verifier {
       null,
       async () => await domain.verifier.getRevokedAssertions(revocationListUrl, this.id)
     );
-
-    const { default: ensureNotRevoked } = await import('./inspectors/ensureNotRevoked');
 
     await this.executeStep(SUB_STEPS.checkRevokedStatus, () => { ensureNotRevoked(revokedCertificatesIds, this.id); }
     );

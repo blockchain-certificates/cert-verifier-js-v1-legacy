@@ -1,5 +1,5 @@
-import * as STEPS from './verificationSteps';
-import i18n from '../data/i18n';
+import { VerificationSteps } from './verificationSteps';
+import i18n from '../data/i18n.json';
 
 const getTransactionId = 'getTransactionId';
 const computeLocalHash = 'computeLocalHash';
@@ -22,9 +22,9 @@ const LABEL = 'Label';
 const LABEL_PENDING = 'LabelPending';
 
 const subStepsMap = {
-  [STEPS.formatValidation]: [getTransactionId, computeLocalHash, fetchRemoteHash, getIssuerProfile, parseIssuerKeys],
-  [STEPS.hashComparison]: [compareHashes, checkMerkleRoot, checkReceipt],
-  [STEPS.statusCheck]: [checkIssuerSignature, checkAuthenticity, checkRevokedStatus, checkExpiresDate]
+  [VerificationSteps.formatValidation]: [getTransactionId, computeLocalHash, fetchRemoteHash, getIssuerProfile, parseIssuerKeys],
+  [VerificationSteps.proofVerification]: [compareHashes, checkMerkleRoot, checkReceipt],
+  [VerificationSteps.statusCheck]: [checkIssuerSignature, checkAuthenticity, checkRevokedStatus, checkExpiresDate]
 };
 
 function generateSubsteps (parentKey) {

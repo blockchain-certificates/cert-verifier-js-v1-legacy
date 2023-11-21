@@ -229,7 +229,7 @@ export default class MerkleProof2017 extends Suite {
   private async checkAuthenticity (): Promise<void> {
     await this.executeStep(
       SUB_STEPS.checkAuthenticity,
-      () => { inspectors.ensureValidIssuingKey(this.issuerPublicKeyList, this.txData.issuingAddress, this.txData.time); },
+      () => { inspectors.ensureValidIssuingKey(this.issuerPublicKeyList, this.txData.issuingAddress, this.txData.time as string); },
       this.type
     );
   }

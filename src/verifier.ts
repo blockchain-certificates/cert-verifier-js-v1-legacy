@@ -14,6 +14,7 @@ import type VerificationSubstep from './domain/verifier/valueObjects/Verificatio
 import { ensureNotExpired } from './inspectors';
 import { type MerkleProof2017 } from './models/MerkleProof2017';
 import type { Signers } from './certificate';
+import MerkleProof2017VerificationSuite from './suites/MerkleProof2017';
 
 export interface IVerificationStepCallbackAPI {
   code: string;
@@ -196,13 +197,10 @@ export default class Verifier {
   }
 
   private async loadRequiredVerificationSuites (documentProofTypes: SupportedVerificationSuites[]): Promise<void> {
-    if (documentProofTypes.includes(SupportedVerificationSuites.MerkleProof2017)) {
-      const { default: MerkleProof2017VerificationSuite } = await import('./suites/MerkleProof2017');
+    if (documentProofTypes.includes(SupportedVerificationSuites.MerkleProof2017) ||
+      documentProofTypes.includes(SupportedVerificationSuites.ChainpointSHA256v2)) {
+      // const { default: MerkleProof2017VerificationSuite } = await import('./suites/MerkleProof2017');
       this.supportedVerificationSuites.MerkleProof2017 = MerkleProof2017VerificationSuite as unknown as Suite;
-    }
-
-    if (documentProofTypes.includes(SupportedVerificationSuites.ChainpointSHA256v2)) {
-      const { default: MerkleProof2017VerificationSuite } = await import('./suites/MerkleProof2017');
       this.supportedVerificationSuites.ChainpointSHA256v2 = MerkleProof2017VerificationSuite as unknown as Suite;
     }
   }

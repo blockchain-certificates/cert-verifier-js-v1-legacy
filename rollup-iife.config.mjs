@@ -6,6 +6,7 @@ import builtins from 'rollup-plugin-node-builtins';
 import globals from 'rollup-plugin-node-globals';
 import polyfills from 'rollup-plugin-polyfill-node';
 import { terser } from 'rollup-plugin-terser';
+import replace from 'rollup-plugin-re';
 
 export default {
   input: 'src/index.ts',
@@ -30,6 +31,14 @@ export default {
     globals(),
     builtins(),
     polyfills(),
+    replace({
+      patterns: [
+        {
+          test: 'var version = \'\'',
+          replace: 'var version = \'11.0.0\''
+        }
+      ]
+    }),
     terser()
   ]
 };

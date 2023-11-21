@@ -6,7 +6,7 @@ import replace from 'rollup-plugin-re';
 import builtins from 'rollup-plugin-node-builtins';
 import globals from 'rollup-plugin-node-globals';
 import babel from 'rollup-plugin-babel';
-import { terser } from 'rollup-plugin-terser';
+// import { terser } from 'rollup-plugin-terser';
 
 export default {
   input: 'src/index.ts',
@@ -80,7 +80,8 @@ export default {
         corejs: 3,
         shippedProposals: true
       }]]
-    }),
-    terser()
+    })
+    //,
+    // terser()
   ]
 };

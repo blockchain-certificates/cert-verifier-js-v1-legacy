@@ -2,7 +2,7 @@ import { request } from '../../../services';
 import { VerifierError } from '../../../models';
 import { SUB_STEPS } from '../../../constants';
 import { getText } from '../../i18n/useCases';
-import { Issuer } from '../../../models/Issuer';
+import { type Issuer } from '../../../models/Issuer';
 
 function isValidUrl (url: string): boolean {
   // https://stackoverflow.com/a/15734347/4064775

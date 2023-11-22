@@ -2,7 +2,7 @@ import { dateToUnixTimestamp } from '../helpers/date';
 import VerifierError from '../models/verifierError';
 import * as SUB_STEPS from '../constants/verificationSubSteps';
 import { getText } from '../domain/i18n/useCases';
-import { IssuerPublicKeyList, ParsedKeyObjectV2 } from '../models/Issuer';
+import { type IssuerPublicKeyList, type ParsedKeyObjectV2 } from '../models/Issuer';
 
 function getCaseInsensitiveKey (obj: IssuerPublicKeyList, value: string): ParsedKeyObjectV2 {
   let key = null;
@@ -20,10 +20,6 @@ export default function ensureValidIssuingKey (keyMap: IssuerPublicKeyList, txIs
   let errorMessage: string = '';
   const theKey: ParsedKeyObjectV2 = getCaseInsensitiveKey(keyMap, txIssuingAddress);
   const txTimeToUnixTimestamp = dateToUnixTimestamp(txTime);
-
-  console.log('issuing address', txIssuingAddress);
-  console.log('known keys', keyMap);
-  console.log('issuing key', theKey);
 
   if (theKey) {
     if (theKey.created && txTimeToUnixTimestamp <= theKey.created) {

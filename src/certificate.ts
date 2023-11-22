@@ -1,29 +1,33 @@
 import domain from './domain';
-import parseJSON, { ParsedCertificate } from './parser';
-import Verifier, { IFinalVerificationStatus, IVerificationStepCallbackFn } from './verifier';
-import { DEFAULT_OPTIONS, TRANSACTION_APIS } from './constants';
+import parseJSON, { type ParsedCertificate } from './parser';
+import Verifier, { type IFinalVerificationStatus, type IVerificationStepCallbackFn } from './verifier';
+import { DEFAULT_OPTIONS } from './constants';
 import currentLocale from './constants/currentLocale';
-import { BlockcertsV1 } from './models/BlockcertsV1';
-import { IBlockchainObject } from './constants/blockchains';
-import Versions from './constants/certificateVersions';
+import { type BlockcertsV1 } from './models/BlockcertsV1';
+import { type IBlockchainObject } from './constants/blockchains';
+import type Versions from './constants/certificateVersions';
 import { deepCopy } from './helpers/object';
-import { TExplorerParsingFunction } from '@blockcerts/explorer-lookup';
-import { Issuer } from './models/Issuer';
-import { ProofValue } from './models/MerkleProof2019';
+import type { ExplorerAPI } from '@blockcerts/explorer-lookup';
+import { type Issuer } from './models/Issuer';
+import { type ProofValue } from './models/MerkleProof2019';
+import { type IVerificationMapItem } from './models/VerificationMap';
 
-export interface ExplorerURLs {
-  main: string;
-  test: string;
+export interface Signers {
+  chain?: IBlockchainObject;
+  issuerName?: string;
+  issuerProfileDomain?: string;
+  issuerProfileUrl?: string;
+  issuerPublicKey: string;
+  rawTransactionLink?: string;
+  signatureSuiteType: string;
+  signingDate: string;
+  transactionId?: string;
+  transactionLink?: string;
 }
 
-export interface ExplorerAPI {
-  serviceURL?: string | ExplorerURLs;
-  priority?: 0 | 1 | -1; // 0: custom APIs will run before the default APIs, 1: after, -1: reserved to default APIs
-  parsingFunction?: TExplorerParsingFunction;
-  serviceName?: TRANSACTION_APIS; // in case one would want to overload the default explorers
-  key?: string; // the user's own key to the service
-  keyPropertyName?: string; // the name of the property
-}
+export type {
+  ExplorerAPI
+};
 
 export interface CertificateOptions {
   locale?: string;
@@ -50,6 +54,7 @@ export default class Certificate {
   public receipt: ProofValue | any; // TODO: define receipt interface for v1, v2
   public recipientFullName: string;
   public recordLink: string;
+  public signers: Signers[] = [];
   public revocationKey: string;
   public sealImage?: string; // v1
   public signature?: string; // v1
@@ -57,8 +62,9 @@ export default class Certificate {
   public subtitle?: string; // v1
   public transactionId: string;
   public transactionLink: string;
-  public verificationSteps: any[]; // TODO: define verificationSteps interface.
+  public verificationSteps: IVerificationMapItem[];
   public version: Versions;
+  public verifier: Verifier;
 
   constructor (certificateDefinition: BlockcertsV1 | string, options: CertificateOptions = {}) {
     // Options
@@ -79,18 +85,7 @@ export default class Certificate {
   async init (): Promise<void> {
     // Parse certificate
     await this.parseJson(this.certificateJson);
-  }
-
-  async parseJson (certificateDefinition): Promise<void> {
-    const parsedCertificate: ParsedCertificate = await parseJSON(certificateDefinition);
-    if (!parsedCertificate.isFormatValid) {
-      throw new Error(parsedCertificate.error);
-    }
-    this._setProperties(parsedCertificate);
-  }
-
-  async verify (stepCallback?: IVerificationStepCallbackFn): Promise<IFinalVerificationStatus> {
-    const verifier = new Verifier({
+    this.verifier = new Verifier({
       certificateJson: this.certificateJson,
       chain: this.chain,
       expires: this.expires,
@@ -102,7 +97,26 @@ export default class Certificate {
       version: this.version,
       explorerAPIs: deepCopy<ExplorerAPI[]>(this.explorerAPIs)
     });
-    return await verifier.verify(stepCallback);
+    await this.verifier.init();
+    this.verificationSteps = this.verifier.getVerificationSteps();
+  }
+
+  async parseJson (certificateDefinition): Promise<void> {
+    const parsedCertificate: ParsedCertificate = await parseJSON(certificateDefinition);
+    if (!parsedCertificate.isFormatValid) {
+      throw new Error(parsedCertificate.error);
+    }
+    this._setProperties(parsedCertificate);
+  }
+
+  async verify (stepCallback?: IVerificationStepCallbackFn): Promise<IFinalVerificationStatus> {
+    const result = await this.verifier.verify(stepCallback);
+    this.setSigners();
+    return result;
+  }
+
+  private setSigners (): void {
+    this.signers = this.verifier.getSignersData();
   }
 
   _setOptions (options): void {
@@ -110,7 +124,7 @@ export default class Certificate {
 
     // Set locale
     this.locale = domain.i18n.ensureIsSupported(this.options.locale === 'auto' ? domain.i18n.detectLocale() : this.options.locale);
-    this.explorerAPIs = this.options.explorerAPIs || [];
+    this.explorerAPIs = this.options.explorerAPIs ?? [];
 
     currentLocale.locale = this.locale;
   }
@@ -157,18 +171,6 @@ export default class Certificate {
     this.signatureImage = signatureImage;
     this.subtitle = subtitle;
 
-    // Get the full verification step-by-step map
-    this.verificationSteps = domain.certificates.getVerificationMap(chain);
-
     this.version = version as Versions;
-
-    // Transaction ID, link & raw link
-    this._setTransactionDetails();
-  }
-
-  _setTransactionDetails (): void {
-    this.transactionId = domain.certificates.getTransactionId(this.receipt);
-    this.rawTransactionLink = domain.certificates.getTransactionLink(this.transactionId, this.chain, true);
-    this.transactionLink = domain.certificates.getTransactionLink(this.transactionId, this.chain);
   }
 }

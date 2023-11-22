@@ -6,7 +6,7 @@ export interface MerkleProof2019 {
   verificationMethod: string;
 }
 
-interface MerklePath {
+export interface MerklePath {
   left?: string;
   right?: string;
 }

@@ -7,9 +7,10 @@ import sha256 from 'sha256';
 import { preloadedContexts } from '../constants';
 import { toUTF8Data } from '../helpers/data';
 import { getText } from '../domain/i18n/useCases';
+import { deepCopy } from '../helpers/object';
 
 function setJsonLdDocumentLoader (): any {
-  if (typeof window !== 'undefined' && typeof window.XMLHttpRequest !== 'undefined') {
+  if (typeof window?.XMLHttpRequest !== 'undefined') {
     return jsonld.documentLoaders.xhr();
   }
 
@@ -31,7 +32,7 @@ function getUnmappedFields (normalized): string[] | null {
 
 export default async function computeLocalHash (document, version): Promise<string> {
   let expandContext = document['@context'];
-  const theDocument = document;
+  const theDocument = deepCopy(document);
   if (!isV1(version) && CONFIG.CheckForUnmappedFields) {
     if (expandContext.find(x => x === Object(x) && '@vocab' in x)) {
       expandContext = null;
@@ -60,7 +61,7 @@ export default async function computeLocalHash (document, version): Promise<stri
     normalizeArgs.expandContext = expandContext;
   }
 
-  return new Promise((resolve, reject) => {
+  return await new Promise((resolve, reject) => {
     jsonld.normalize(theDocument, normalizeArgs, (err, normalized) => {
       const isErr = !!err;
       if (isErr) {

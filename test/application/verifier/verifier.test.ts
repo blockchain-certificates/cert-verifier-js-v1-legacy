@@ -3,7 +3,9 @@ import fixture from '../../fixtures/v1/v1.json';
 import { BLOCKCHAINS, CERTIFICATE_VERSIONS, VERIFICATION_STATUSES } from '../../../src';
 import Verifier from '../../../src/verifier';
 import domain from '../../../src/domain';
-import { ExplorerAPI } from 'certificate';
+import { type ExplorerAPI } from 'certificate';
+import * as ExplorerLookup from '@blockcerts/explorer-lookup';
+import issuerProfileV1JsonFixture from '../../fixtures/v1/got-issuer_live.json';
 
 describe('Verifier entity test suite', function () {
   let verifierInstance: Verifier;
@@ -20,7 +22,17 @@ describe('Verifier entity test suite', function () {
     explorerAPIs: undefined
   };
 
+  let stubRequest;
+
+  beforeEach(async function () {
+    stubRequest = sinon.stub(ExplorerLookup, 'request');
+    stubRequest.withArgs({
+      url: 'http://www.blockcerts.org/mockissuer/issuer/got-issuer_live.json'
+    }).resolves(JSON.stringify(issuerProfileV1JsonFixture));
+  });
+
   afterEach(function () {
+    stubRequest.restore();
     verifierInstance = null;
   });
 
@@ -30,10 +42,6 @@ describe('Verifier entity test suite', function () {
     });
 
     describe('given all parameters are passed', function () {
-      it('should set the chain to the verifier object', function () {
-        expect(verifierInstance.chain).toEqual(verifierParamFixture.chain);
-      });
-
       it('should set the expires to the verifier object', function () {
         expect(verifierInstance.expires).toBe(verifierParamFixture.expires);
       });
@@ -46,20 +54,8 @@ describe('Verifier entity test suite', function () {
         expect(verifierInstance.issuer).toEqual(verifierParamFixture.issuer);
       });
 
-      it('should set the receipt to the verifier object', function () {
-        expect(verifierInstance.receipt).toBe(verifierParamFixture.receipt);
-      });
-
       it('should set the revocationKey to the verifier object', function () {
         expect(verifierInstance.revocationKey).toBe(verifierParamFixture.revocationKey);
-      });
-
-      it('should set the version to the verifier object', function () {
-        expect(verifierInstance.version).toBe(verifierParamFixture.version);
-      });
-
-      it('should set the transactionId to the verifier object', function () {
-        expect(verifierInstance.transactionId).toBe(verifierParamFixture.transactionId);
       });
 
       describe('explorerAPIs', function () {
@@ -77,6 +73,7 @@ describe('Verifier entity test suite', function () {
 
             const lookForTxSpy: sinon.SinonStub = sinon.stub(domain.verifier, 'lookForTx');
             const instance = new Verifier(parametersWithExporerAPI);
+            await instance.init();
             await instance.verify();
             expect(lookForTxSpy.firstCall.args[0].explorerAPIs).toEqual(parametersWithExporerAPI.explorerAPIs);
             lookForTxSpy.restore();
@@ -85,8 +82,7 @@ describe('Verifier entity test suite', function () {
       });
 
       it('should set the documentToVerify to the verifier object', function () {
-        const documentAssertion = JSON.parse(JSON.stringify(fixture)).document;
-        // delete documentAssertion.signature;
+        const documentAssertion = JSON.parse(JSON.stringify(fixture));
         expect(verifierInstance.documentToVerify).toEqual(documentAssertion);
       });
     });
@@ -102,7 +98,7 @@ describe('Verifier entity test suite', function () {
         (verifierInstance as any)._stepsStatuses.push({ step: 'testStep 1', status: VERIFICATION_STATUSES.SUCCESS, action: 'Test Step 1' });
         (verifierInstance as any)._stepsStatuses.push({ step: 'testStep 2', status: VERIFICATION_STATUSES.SUCCESS, action: 'Test Step 2' });
 
-        expect(verifierInstance._isFailing()).toBe(false);
+        expect((verifierInstance as any)._isFailing()).toBe(false);
       });
     });
     describe('when one check is failing', function () {
@@ -110,7 +106,7 @@ describe('Verifier entity test suite', function () {
         (verifierInstance as any)._stepsStatuses.push({ step: 'testStep 1', status: VERIFICATION_STATUSES.SUCCESS, action: 'Test Step 1' });
         (verifierInstance as any)._stepsStatuses.push({ step: 'testStep 2', status: VERIFICATION_STATUSES.FAILURE, action: 'Test Step 2' });
 
-        expect(verifierInstance._isFailing()).toBe(true);
+        expect((verifierInstance as any)._isFailing()).toBe(true);
       });
     });
   });

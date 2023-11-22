@@ -212,7 +212,7 @@ import { BLOCKCHAINS, STEPS, SUB_STEPS, CERTIFICATE_VERSIONS, VERIFICATION_STATU
 - [`STEPS`](https://github.com/blockchain-certificates/cert-verifier-js-v1-legacy/blob/master/src/constants/verificationSteps.js): descriptive object of all verification steps (top level)
 - [`SUB_STEPS`](https://github.com/blockchain-certificates/cert-verifier-js-v1-legacy/blob/master/src/constants/verificationSubSteps.js): descriptive object of all verification substeps
 - [`CERTIFICATE_VERSIONS`](https://github.com/blockchain-certificates/cert-verifier-js-v1-legacy/blob/master/src/constants/certificateVersions.js): list of all certificate versions
-- [`VERIFICATION_STATUSES`](https://github.com/blockchain-certificates/cert-verifier-js-v1-legacy/blob/master/src/constants/verificationStatuses.js)
+- [`VERIFICATION_STATUSES`](https://github.com/blockchain-certificates/cert-verifier-js-v1-legacy/blob/master/src/constants/verificationStatuses.ts)
 
 ### i18n
 The exposed function `getSupportedLanguages()` returns an array of language codes supported by the library.

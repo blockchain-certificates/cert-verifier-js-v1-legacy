@@ -1,6 +1,4 @@
-export interface IssuerPublicKeyList {
-  [key: string]: ParsedKeyObjectV2;
-}
+export type IssuerPublicKeyList = Record<string, ParsedKeyObjectV2>;
 
 export interface KeyObjectV1 {
   date: string;

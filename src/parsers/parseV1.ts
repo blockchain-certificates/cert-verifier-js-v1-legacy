@@ -1,8 +1,8 @@
 import domain from '../domain';
 import getSignatureImages from './helpers/getSignatureImage';
 import { CERTIFICATE_VERSIONS } from '../constants';
-import { IBlockchainObject } from '../constants/blockchains';
-import { BlockcertsV1 } from '../models/BlockcertsV1';
+import { type IBlockchainObject } from '../constants/blockchains';
+import { type BlockcertsV1 } from '../models/BlockcertsV1';
 
 /**
  * parseV1
@@ -18,7 +18,7 @@ interface IRecipient {
   revocationKey?: string;
 }
 
-export default function parseV1 (certificateJson): BlockcertsV1 {
+export default async function parseV1 (certificateJson): Promise<BlockcertsV1> {
   const fullCertificateObject = certificateJson.certificate || certificateJson.document.certificate;
   const recipient: IRecipient = certificateJson.recipient || certificateJson.document.recipient;
   const assertion = certificateJson.document.assertion;
@@ -26,7 +26,7 @@ export default function parseV1 (certificateJson): BlockcertsV1 {
   const receipt = certificateJson.receipt;
   const version = typeof receipt === 'undefined' ? CERTIFICATE_VERSIONS.V1_1 : CERTIFICATE_VERSIONS.V1_2;
 
-  let { image: certificateImage, description, issuer, subtitle } = fullCertificateObject;
+  let { image: certificateImage, description, issuer: issuerInfo, subtitle } = fullCertificateObject;
 
   const publicKey = recipient.publicKey;
   const chain: IBlockchainObject = domain.certificates.getChain(publicKey);
@@ -36,11 +36,13 @@ export default function parseV1 (certificateJson): BlockcertsV1 {
   const metadataJson = assertion.metadataJson;
   const recipientFullName = `${recipient.givenName} ${recipient.familyName}`;
   const recordLink = assertion.id;
-  const revocationKey = recipient.revocationKey || null;
-  const sealImage = issuer.image;
+  const revocationKey = recipient.revocationKey ?? null;
+  const sealImage = issuerInfo.image;
   const signature = certificateJson.document.signature;
   const signaturesRaw = certificateJson.document?.assertion?.['image:signature'];
   const signatureImage = getSignatureImages(signaturesRaw, version);
+  const issuer = await domain.verifier.getIssuerProfile(issuerInfo.id);
+
   if (typeof subtitle === 'object') {
     subtitle = subtitle.display ? subtitle.content : '';
   }

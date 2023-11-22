@@ -23,6 +23,7 @@ export class FakeXmlHttpRequest {
         return JSON.stringify(v1IssuerProfile);
 
       case 'https://blockstream.info/api/tx/8623beadbc7877a9e20fb7f83eda6c1a1fc350171f0714ff6c6c4054018eb54d':
+      case 'https://blockstream.info/testnet/api/tx/8623beadbc7877a9e20fb7f83eda6c1a1fc350171f0714ff6c6c4054018eb54d':
         return JSON.stringify({
           vout: [
             {
@@ -45,6 +46,7 @@ export class FakeXmlHttpRequest {
         });
 
       case 'https://api.blockcypher.com/v1/btc/main/txs/8623beadbc7877a9e20fb7f83eda6c1a1fc350171f0714ff6c6c4054018eb54d?limit=500':
+      case 'https://api.blockcypher.com/v1/btc/test3/txs/8623beadbc7877a9e20fb7f83eda6c1a1fc350171f0714ff6c6c4054018eb54d?limit=500':
         return JSON.stringify({
           block_hash: '000000000000000000b678d75eef4234cb04cea4f6324830e7d11ca99aa2f326',
           block_height: 432702,

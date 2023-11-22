@@ -4,7 +4,7 @@ import FIXTURES from '../../fixtures';
 import domain from '../../../src/domain';
 import * as VerifierUseCases from '../../../src/domain/verifier/useCases';
 import v1_2IssuerProfile from '../../data/v1.2-issuer-profile.json';
-import { TransactionData } from '../../../src/models/TransactionData';
+import { type TransactionData } from '../../../src/models/TransactionData';
 
 describe('given the certificate is a valid testnet (v1.2)', function () {
   beforeEach(function () {

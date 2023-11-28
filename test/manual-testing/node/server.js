@@ -10,27 +10,40 @@ const port = 4000;
 server.post('/verification', async (req, res) => {
   if (req.body.blockcerts) {
     const blockcertsData = req.body.blockcerts;
-    const certificate = new certVerifierJs.Certificate(blockcertsData);
-    await certificate.init();
-    await certificate
-      .verify()
-      .then(({ status, message }) => {
-        console.log(`${req.body.version} Status:`, status);
+    try {
+      const certificate = new certVerifierJs.Certificate(blockcertsData);
+      await certificate.init();
+      await certificate
+        .verify()
+        .then(({ status, message }) => {
+          console.log(`${req.body.version} Status:`, status);
 
-        if (status === 'failure') {
-          console.log(`The certificate ${req.body.blockcerts.id} is not valid. Error: ${message}`);
-        }
+          if (status === 'failure') {
+            console.log(`The certificate ${req.body.blockcerts.id} is not valid. Error: ${message}`);
+          }
 
-        return res.json({
-          version: req.body.version,
-          status,
-          message
+          return res.json({
+            version: req.body.version,
+            status,
+            message
+          });
+        })
+        .catch(err => {
+          console.error(req.body.version, err);
+          res.json({
+            version: req.body.version,
+            status: 'failure',
+            message: err
+          });
         });
-      })
-      .catch(err => {
-        console.log(req.body.version, err);
-        return err;
+    } catch (e) {
+      console.error(req.body.version, 'Certificate creation error:', e);
+      res.json({
+        version: req.body.version,
+        status: 'failure',
+        message: e
       });
+    }
   }
 });
 

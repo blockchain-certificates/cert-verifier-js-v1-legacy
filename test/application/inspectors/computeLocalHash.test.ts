@@ -1,20 +1,21 @@
-import blockcertsV3Fixture from '../../fixtures/v3/testnet-v3-did.json';
+import blockcertsV1Fixture from '../../fixtures/v1/mainnet-valid-1.2.json';
 import computeLocalHash, { getUnmappedFields } from '../../../src/inspectors/computeLocalHash';
 
 describe('computeLocalHash test suite', function () {
   let fixture;
   beforeEach(function () {
-    fixture = Object.assign({}, blockcertsV3Fixture);
+    fixture = Object.assign({}, blockcertsV1Fixture);
   });
 
   describe('given it receives a document', function () {
     it('should return the SHA-256 hashed version', async function () {
       const output = await computeLocalHash(fixture);
-      expect(output).toBe('eca54e560dd43cccd900fa4bb9221f144d4c451c24beeddfd82e31db842bced1');
+      expect(output).toBe('c9ead76a54426b4ce4899bb921e48f5b55ea7592e5cee4460c86ebf4698ac3a6');
     });
   });
 
-  describe('given it receives the document has unmapped fields', function () {
+  xdescribe('given it receives the document has unmapped fields', function () {
+    // disabled as we disabled safe mode for legacy certs that may have unmapped fields
     it('should throw', async function () {
       fixture.testUnmapped = 'this field is not mapped';
       await expect(async () => {

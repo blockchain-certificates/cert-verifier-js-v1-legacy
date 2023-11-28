@@ -1,12 +1,12 @@
 import { BLOCKCHAINS } from '@blockcerts/explorer-lookup';
-import addresses from '../../addresses';
 import { getText } from '../../i18n/useCases';
 import type { IBlockchainObject } from '@blockcerts/explorer-lookup';
 import type { Receipt } from '../../../models/Receipt';
 import type { MerkleProof2017Anchor } from '../../../models/MerkleProof2017';
 
-function defaultChainAssumption (address = ''): IBlockchainObject {
-  return addresses.isMainnet(address) ? BLOCKCHAINS.bitcoin : BLOCKCHAINS.testnet;
+function defaultChainAssumption (): IBlockchainObject {
+  // return addresses.isMainnet(address) ? BLOCKCHAINS.bitcoin : BLOCKCHAINS.testnet;
+  return BLOCKCHAINS.bitcoin;
 }
 
 function getChainObject (chainCodeSignatureValue): IBlockchainObject {
@@ -39,7 +39,6 @@ export default function getChain (address: string, proof: Receipt): IBlockchainO
     }
   }
 
-  // Legacy path: we didn't support anything other than testnet and mainnet, so we check the address prefix
-  // otherwise try to determine the chain from a bitcoin address
-  return defaultChainAssumption(address);
+  // v1 does not have a chain notion in the receipt
+  return defaultChainAssumption();
 }

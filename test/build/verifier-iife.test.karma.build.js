@@ -120,36 +120,34 @@ window.XMLHttpRequest = mockXHR.FakeXmlHttpRequest;
 describe('verifier build test suite', function () {
   it('throws a deprecation error with a v1 certificate', async function () {
     const certificate = new Verifier.Certificate(fixtureV1);
-    await expectAsync(certificate.init())
-      .toBeRejectedWith(new Error('Verification of v1 certificates is not supported by this component. ' +
-      'See the python cert-verifier for v1.1 verification ' +
-      'or the npm package cert-verifier-js-v1-legacy for v1.2 ' +
-      '(https://www.npmjs.com/package/@blockcerts/cert-verifier-js-v1-legacy)'));
-  });
-
-  it('works as expected with a v2 certificate', async function () {
-    const certificate = new Verifier.Certificate(fixtureV2);
     await certificate.init();
     const result = await certificate.verify();
-    expect(result.status).toBe('success');
     expect(result.message).toEqual({
       label: 'Verified',
       // eslint-disable-next-line no-template-curly-in-string
       description: 'This is a valid ${chain} certificate.',
       linkText: 'View transaction link'
     });
+    expect(result.status).toBe('success');
   });
 
-  it('works as expected with a v3 certificate', async function () {
-    const certificate = new Verifier.Certificate(fixtureV3);
-    await certificate.init();
-    const result = await certificate.verify();
-    expect(result.status).toBe('success');
-    expect(result.message).toEqual({
-      label: 'Verified',
-      // eslint-disable-next-line no-template-curly-in-string
-      description: 'This is a valid ${chain} certificate.',
-      linkText: 'View transaction link'
-    });
+  it('throws an error with a v2 certificate', async function () {
+    async function initV2Cert () {
+      const certificate = new Verifier.Certificate(fixtureV2);
+      await certificate.init();
+    }
+
+    await expectAsync(initV2Cert())
+      .toBeRejectedWith(new Error('The verification of a Blockcerts v2 or v3 is not supported by this library which is only a legacy support for Blockcerts v1. Please use @blockcerts/cert-verifier-js for modern versions.'));
+  });
+
+  it('throws an error with a v3 certificate', async function () {
+    async function initV3Cert () {
+      const certificate = new Verifier.Certificate(fixtureV3);
+      await certificate.init();
+    }
+
+    await expectAsync(initV3Cert())
+      .toBeRejectedWith(new Error('The verification of a Blockcerts v2 or v3 is not supported by this library which is only a legacy support for Blockcerts v1. Please use @blockcerts/cert-verifier-js for modern versions.'));
   });
 });

@@ -131,21 +131,23 @@ describe('verifier build test suite', function () {
     expect(result.status).toBe('success');
   });
 
-  it('works as expected with a v2 certificate', async function () {
-    const certificate = new Verifier.Certificate(fixtureV2);
-    await expectAsync(certificate.init())
-      .toBeRejectedWith(new Error('Verification of v1 certificates is not supported by this component. ' +
-        'See the python cert-verifier for v1.1 verification ' +
-        'or the npm package cert-verifier-js-v1-legacy for v1.2 ' +
-        '(https://www.npmjs.com/package/@blockcerts/cert-verifier-js-v1-legacy)'));
+  it('throws an error with a v2 certificate', async function () {
+    async function initV2Cert () {
+      const certificate = new Verifier.Certificate(fixtureV2);
+      await certificate.init();
+    }
+
+    await expectAsync(initV2Cert())
+      .toBeRejectedWith(new Error('The verification of a Blockcerts v2 or v3 is not supported by this library which is only a legacy support for Blockcerts v1. Please use @blockcerts/cert-verifier-js for modern versions.'));
   });
 
-  it('works as expected with a v3 certificate', async function () {
-    const certificate = new Verifier.Certificate(fixtureV3);
-    await expectAsync(certificate.init())
-      .toBeRejectedWith(new Error('Verification of v1 certificates is not supported by this component. ' +
-        'See the python cert-verifier for v1.1 verification ' +
-        'or the npm package cert-verifier-js-v1-legacy for v1.2 ' +
-        '(https://www.npmjs.com/package/@blockcerts/cert-verifier-js-v1-legacy)'));
+  it('throws an error with a v3 certificate', async function () {
+    async function initV3Cert () {
+      const certificate = new Verifier.Certificate(fixtureV3);
+      await certificate.init();
+    }
+
+    await expectAsync(initV3Cert())
+      .toBeRejectedWith(new Error('The verification of a Blockcerts v2 or v3 is not supported by this library which is only a legacy support for Blockcerts v1. Please use @blockcerts/cert-verifier-js for modern versions.'));
   });
 });

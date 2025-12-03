@@ -1,28 +1,33 @@
 import fixture from '../../fixtures/v1/mainnet-valid-1.2.json';
 import { Certificate } from '../../../src';
 import mainnetMapAssertion from '../../assertions/verification-steps-v1-mainnet';
-import sinon from 'sinon';
-import * as ExplorerLookup from '@blockcerts/explorer-lookup';
-import issuerProfileV1JsonFixture from '../../fixtures/v1/got-issuer_live.json';
+import fixtureIssuerProfile from '../../fixtures/v1/got-issuer_live.json';
 
 describe('Certificate entity test suite', function () {
   describe('constructor method', function () {
     describe('given it is called with valid v1 certificate data', function () {
       let certificate;
-      let stubRequest;
 
-      beforeEach(async function () {
-        stubRequest = sinon.stub(ExplorerLookup, 'request');
-        stubRequest.withArgs({
-          url: 'http://www.blockcerts.org/mockissuer/issuer/got-issuer_live.json'
-        }).resolves(JSON.stringify(issuerProfileV1JsonFixture));
+      beforeAll(async function () {
+        vi.mock('@blockcerts/explorer-lookup', async (importOriginal) => {
+          const original = await importOriginal();
+
+          return {
+            ...original,
+            request: async function ({ url }) {
+              if (url === 'http://www.blockcerts.org/mockissuer/issuer/got-issuer_live.json') {
+                return JSON.stringify(fixtureIssuerProfile);
+              }
+            }
+          };
+        });
+
         certificate = new Certificate(fixture);
         await certificate.init();
       });
 
-      afterEach(function () {
-        stubRequest.restore();
-        certificate = null;
+      afterAll(function () {
+        vi.restoreAllMocks();
       });
 
       it('should set the certificateJson of the certificate object', function () {
@@ -50,7 +55,7 @@ describe('Certificate entity test suite', function () {
       });
 
       it('should set issuer of the certificate object', function () {
-        expect(certificate.issuer).toEqual(issuerProfileV1JsonFixture);
+        expect(certificate.issuer).toEqual(fixtureIssuerProfile);
       });
 
       it('should set metadataJson of the certificate object', function () {

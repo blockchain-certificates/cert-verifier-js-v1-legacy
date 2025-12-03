@@ -14,16 +14,6 @@ describe('computeLocalHash test suite', function () {
     });
   });
 
-  xdescribe('given it receives the document has unmapped fields', function () {
-    // disabled as we disabled safe mode for legacy certs that may have unmapped fields
-    it('should throw', async function () {
-      fixture.testUnmapped = 'this field is not mapped';
-      await expect(async () => {
-        await computeLocalHash(fixture);
-      }).rejects.toThrow('Found unmapped fields during JSON-LD normalization: testUnmapped');
-    });
-  });
-
   describe('getUnmappedFields method', function () {
     describe('given it finds no unmapped fields', function () {
       it('should return null', function () {

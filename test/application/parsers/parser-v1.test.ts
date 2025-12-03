@@ -1,22 +1,26 @@
 import { CERTIFICATE_VERSIONS } from '../../../src/constants';
 import parseJSON from '../../../src/parsers';
-import sinon from 'sinon';
-import * as ExplorerLookup from '@blockcerts/explorer-lookup';
-import issuerProfileV1JsonFixture from '../../fixtures/v1/got-issuer_live.json';
 import fixture from '../../fixtures/v1/mainnet-valid-1.2.json';
+import fixtureIssuerProfile from '../../fixtures/v1/got-issuer_live.json';
 
 describe('Parser test suite', function () {
-  let stubRequest;
+  beforeAll(async function () {
+    vi.mock('@blockcerts/explorer-lookup', async (importOriginal) => {
+      const original = await importOriginal();
 
-  beforeEach(function () {
-    stubRequest = sinon.stub(ExplorerLookup, 'request');
-    stubRequest.withArgs({
-      url: 'http://www.blockcerts.org/mockissuer/issuer/got-issuer_live.json'
-    }).resolves(JSON.stringify(issuerProfileV1JsonFixture));
+      return {
+        ...original,
+        request: async function ({ url }) {
+          if (url === 'http://www.blockcerts.org/mockissuer/issuer/got-issuer_live.json') {
+            return JSON.stringify(fixtureIssuerProfile);
+          }
+        }
+      };
+    });
   });
 
-  afterEach(function () {
-    stubRequest.restore();
+  afterAll(function () {
+    vi.restoreAllMocks();
   });
 
   describe('given it is called with a invalid format v2 certificate data', function () {
@@ -60,7 +64,7 @@ describe('Parser test suite', function () {
     });
 
     it('should set the issuer of the certificate object', function () {
-      expect(parsedCertificate.issuer).toEqual(issuerProfileV1JsonFixture);
+      expect(parsedCertificate.issuer).toEqual(fixtureIssuerProfile);
     });
 
     it('should set the name of the certificate object', function () {

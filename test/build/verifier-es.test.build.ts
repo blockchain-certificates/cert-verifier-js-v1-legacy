@@ -1,17 +1,11 @@
-/**
- * @jest-environment jsdom
- */
-
 import { FakeXmlHttpRequest } from './mocks/FakeXmlHttpRequest';
 import { Certificate } from '../../dist/verifier-es';
-import crypto from 'crypto';
 import v1Fixture from '../fixtures/v1/mainnet-valid-1.2.json';
 import v2Fixture from '../fixtures/v2/ethereum-main-valid-2.0.json';
 import v3Fixture from '../fixtures/v3/proof-chain-example-secp256k1.json';
 
 // @ts-expect-error we just mock the thing
 global.XMLHttpRequest = FakeXmlHttpRequest;
-global.crypto.subtle = crypto.webcrypto.subtle;
 
 describe('verifier build test suite', function () {
   describe('verifier build test suite', function () {

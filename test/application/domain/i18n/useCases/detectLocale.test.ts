@@ -1,12 +1,17 @@
 import domain from '../../../../../src/domain';
 
-global.navigator = {} as any;
+const originalNavigator = globalThis.navigator;
 
 describe('domain i18n detectLocale use case test suite', function () {
+  afterEach(function () {
+    vi.unstubAllGlobals();
+  });
+
   describe('given it detected the navigator locale', function () {
     beforeEach(function () {
-      (navigator as any).__defineGetter__('language', function () {
-        return 'fr-FR';
+      vi.stubGlobal('navigator', {
+        ...originalNavigator,
+        language: 'fr-FR'
       });
     });
 
@@ -18,8 +23,9 @@ describe('domain i18n detectLocale use case test suite', function () {
 
   describe('given it did not get any navigator properties', function () {
     beforeEach(function () {
-      (navigator as any).__defineGetter__('language', function () {
-        return null;
+      vi.stubGlobal('navigator', {
+        ...originalNavigator,
+        language: null
       });
     });
 

@@ -1,4 +1,3 @@
-import sinon from 'sinon';
 import { VERIFICATION_STATUSES } from '../../../src';
 import { BLOCKCHAINS } from '@blockcerts/explorer-lookup';
 import Verifier from '../../../src/verifier';
@@ -7,13 +6,31 @@ import { deepCopy } from '../../../src/helpers/object';
 import { SUB_STEPS } from '../../../src/constants/verificationSteps';
 import verificationStepsV1Mainnet from '../../assertions/verification-steps-v1-mainnet';
 import type { ExplorerAPI } from '@blockcerts/explorer-lookup';
-import type { IVerificationMapItem } from '../../../src/models/VerificationMap';
-import * as ExplorerLookup from '@blockcerts/explorer-lookup';
 import fixtureV1 from '../../fixtures/v1/mainnet-valid-1.2.json';
 import fixtureV1IssuerProfile from '../../fixtures/v1/got-issuer_live.json';
 
+beforeAll(async function () {
+  vi.mock('@blockcerts/explorer-lookup', async (importOriginal) => {
+    const original = await importOriginal();
+
+    return {
+      ...original,
+      request: async function ({ url }) {
+        if (url === 'http://www.blockcerts.org/mockissuer/issuer/got-issuer_live.json') {
+          return JSON.stringify(fixtureV1IssuerProfile);
+        }
+      }
+    };
+  });
+});
+
+afterAll(function () {
+  vi.restoreAllMocks();
+});
+
 describe('Verifier entity test suite', function () {
   let verifierInstance: Verifier;
+
   const verifierParamFixture = {
     certificateJson: fixtureV1,
     chain: BLOCKCHAINS.bitcoin,
@@ -26,18 +43,6 @@ describe('Verifier entity test suite', function () {
       type: 'ChainpointSHA256v2'
     }
   };
-
-  beforeEach(function () {
-    const requestStub = sinon.stub(ExplorerLookup, 'request');
-    requestStub.withArgs({
-      url: 'http://www.blockcerts.org/mockissuer/issuer/got-issuer_live.json'
-    }).resolves(JSON.stringify(fixtureV1IssuerProfile));
-  });
-
-  afterEach(function () {
-    verifierInstance = null;
-    sinon.restore();
-  });
 
   describe('constructor method', function () {
     beforeEach(async function () {
@@ -68,19 +73,29 @@ describe('Verifier entity test suite', function () {
             const fixtureExplorerAPI: ExplorerAPI = {
               serviceURL: 'https://test.com'
             };
+
             const parametersWithExporerAPI = {
               ...verifierParamFixture,
-              explorerAPIs: [
-                fixtureExplorerAPI
-              ]
+              explorerAPIs: [fixtureExplorerAPI]
             };
 
-            const lookForTxSpy: sinon.SinonStub = sinon.stub(domain.verifier, 'lookForTx');
+            const lookForTxSpy = vi
+              .spyOn(domain.verifier, 'lookForTx')
+              .mockResolvedValue({
+                remoteHash: 'x',
+                issuingAddress: 'y',
+                time: 'z',
+                revokedAddresses: []
+              });
+
             const instance = new Verifier(parametersWithExporerAPI);
             await instance.init();
             await instance.verify();
-            expect(lookForTxSpy.firstCall.args[0].explorerAPIs).toEqual(parametersWithExporerAPI.explorerAPIs);
-            lookForTxSpy.restore();
+
+            expect(lookForTxSpy.mock.calls[0][0].explorerAPIs)
+              .toEqual(parametersWithExporerAPI.explorerAPIs);
+
+            lookForTxSpy.mockRestore();
           });
         });
       });
@@ -88,32 +103,35 @@ describe('Verifier entity test suite', function () {
       describe('verify method', function () {
         describe('when starting a new verification process', function () {
           it('should reset the step status property', async function () {
-            sinon.stub(domain.verifier, 'lookForTx').resolves({
+            const lookForTxStub = vi.spyOn(domain.verifier, 'lookForTx').mockResolvedValue({
               remoteHash: '68f3ede17fdb67ffd4a5164b5687a71f9fbb68da803b803935720f2aa38f7728',
               issuingAddress: '1Q3P94rdNyftFBEKiN1fxmt2HnQgSCB619',
               time: '2016-10-03T19:52:55.000Z',
               revokedAddresses: []
             });
+
             const instance = new Verifier(verifierParamFixture);
             await instance.init();
             await instance.verify();
-            // @ts-expect-error accessing private field
-            expect((instance._stepsStatuses)).not.toEqual([]);
-            // ignore await
+
+            expect((instance as any)._stepsStatuses).not.toEqual([]);
+
             void instance.verify();
-            // @ts-expect-error accessing private field
-            expect(instance._stepsStatuses).toEqual([]);
+
+            expect((instance as any)._stepsStatuses).toEqual([]);
+
+            lookForTxStub.mockRestore();
           });
         });
       });
 
       it('should set the documentToVerify to the verifier object', function () {
-        const documentAssertion = JSON.parse(JSON.stringify(fixtureV1));
-        expect(verifierInstance.documentToVerify).toEqual(documentAssertion);
+        expect(verifierInstance.documentToVerify)
+          .toEqual(JSON.parse(JSON.stringify(fixtureV1)));
       });
 
       it('should set the verificationSteps property', function () {
-        const expectedSteps = deepCopy<IVerificationMapItem[]>(verificationStepsV1Mainnet);
+        const expectedSteps = deepCopy(verificationStepsV1Mainnet);
         expect(verifierInstance.verificationSteps).toEqual(expectedSteps);
       });
     });
@@ -127,16 +145,35 @@ describe('Verifier entity test suite', function () {
 
     describe('when all checks are successful', function () {
       it('should return false', function () {
-        (verifierInstance as any)._stepsStatuses.push({ step: 'testStep 1', status: VERIFICATION_STATUSES.SUCCESS, action: 'Test Step 1' });
-        (verifierInstance as any)._stepsStatuses.push({ step: 'testStep 2', status: VERIFICATION_STATUSES.SUCCESS, action: 'Test Step 2' });
+        (verifierInstance as any)._stepsStatuses.push({
+          step: 'testStep 1',
+          status: VERIFICATION_STATUSES.SUCCESS,
+          action: 'Test Step 1'
+        });
+
+        (verifierInstance as any)._stepsStatuses.push({
+          step: 'testStep 2',
+          status: VERIFICATION_STATUSES.SUCCESS,
+          action: 'Test Step 2'
+        });
 
         expect((verifierInstance as any)._isFailing()).toBe(false);
       });
     });
+
     describe('when one check is failing', function () {
       it('should return true', function () {
-        (verifierInstance as any)._stepsStatuses.push({ step: 'testStep 1', status: VERIFICATION_STATUSES.SUCCESS, action: 'Test Step 1' });
-        (verifierInstance as any)._stepsStatuses.push({ step: 'testStep 2', status: VERIFICATION_STATUSES.FAILURE, action: 'Test Step 2' });
+        (verifierInstance as any)._stepsStatuses.push({
+          step: 'testStep 1',
+          status: VERIFICATION_STATUSES.SUCCESS,
+          action: 'Test Step 1'
+        });
+
+        (verifierInstance as any)._stepsStatuses.push({
+          step: 'testStep 2',
+          status: VERIFICATION_STATUSES.FAILURE,
+          action: 'Test Step 2'
+        });
 
         expect((verifierInstance as any)._isFailing()).toBe(true);
       });
@@ -148,10 +185,12 @@ describe('Verifier entity test suite', function () {
       it('should be set accordingly', async function () {
         verifierInstance = new Verifier(verifierParamFixture);
         await verifierInstance.init();
+
         const expectedOutput = [
           SUB_STEPS.checkRevokedStatus,
           SUB_STEPS.checkExpiresDate
         ];
+
         expect(verifierInstance.verificationProcess).toEqual(expectedOutput);
       });
     });

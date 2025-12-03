@@ -1,5 +1,6 @@
 import fixtureV1 from '../../fixtures/v1/mainnet-valid-1.2.json';
 import ensureValidReceipt from '../../../src/inspectors/ensureValidReceipt';
+import { VerifierError } from '../../../src/models';
 
 describe('ensureValidReceipt inspector test suite', function () {
   describe('given it is called with a valid merkle root 2017 signature', function () {
@@ -26,7 +27,7 @@ describe('ensureValidReceipt inspector test suite', function () {
         invalidFixture.targetHash = 'fonky';
         expect(() => {
           ensureValidReceipt(invalidFixture);
-        }).toThrow(new Error('Invalid Merkle Receipt. Proof hash did not match Merkle root'));
+        }).toThrow(new VerifierError('checkReceipt', 'Invalid Merkle Receipt. Proof hash did not match Merkle root'));
       });
     });
 
@@ -35,7 +36,7 @@ describe('ensureValidReceipt inspector test suite', function () {
         invalidFixture.proof.push({ left: 'fonky' });
         expect(() => {
           ensureValidReceipt(invalidFixture);
-        }).toThrow(new Error('Invalid Merkle Receipt. Proof hash did not match Merkle root'));
+        }).toThrow(new VerifierError('checkReceipt', 'Invalid Merkle Receipt. Proof hash did not match Merkle root'));
       });
     });
 
@@ -44,7 +45,7 @@ describe('ensureValidReceipt inspector test suite', function () {
         invalidFixture.proof.push({ right: 'fonky' });
         expect(() => {
           ensureValidReceipt(invalidFixture);
-        }).toThrow(new Error('Invalid Merkle Receipt. Proof hash did not match Merkle root'));
+        }).toThrow(new VerifierError('checkReceipt', 'Invalid Merkle Receipt. Proof hash did not match Merkle root'));
       });
     });
 
@@ -53,7 +54,7 @@ describe('ensureValidReceipt inspector test suite', function () {
         invalidFixture.proof.push({});
         expect(() => {
           ensureValidReceipt(invalidFixture);
-        }).toThrow(new Error('The receipt is malformed. There was a problem navigating the merkle tree in the receipt.'));
+        }).toThrow(new VerifierError('checkReceipt', 'The receipt is malformed. There was a problem navigating the merkle tree in the receipt.'));
       });
     });
   });

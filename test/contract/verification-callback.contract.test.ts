@@ -1,28 +1,39 @@
-import sinon from 'sinon';
-import * as domainVerifier from '../../src/domain/verifier/useCases';
-import * as ExplorerLookup from '@blockcerts/explorer-lookup';
 import { Certificate, VERIFICATION_STATUSES } from '../../src';
 import type { IVerificationStepCallbackAPI } from '../../src/verifier';
 import BlockcertsV1 from '../fixtures/v1/mainnet-valid-1.2.json';
 import fixtureIssuerProfile from '../fixtures/v1/got-issuer_live.json';
 
 describe('when the certificate verified', function () {
-  beforeEach(function () {
-    const requestStub = sinon.stub(ExplorerLookup, 'request');
-    const lookForTxStub = sinon.stub(domainVerifier, 'lookForTx');
-    requestStub.withArgs({
-      url: 'http://www.blockcerts.org/mockissuer/issuer/got-issuer_live.json'
-    }).resolves(JSON.stringify(fixtureIssuerProfile));
-    lookForTxStub.resolves({
-      remoteHash: '68f3ede17fdb67ffd4a5164b5687a71f9fbb68da803b803935720f2aa38f7728',
-      issuingAddress: '1Q3P94rdNyftFBEKiN1fxmt2HnQgSCB619',
-      time: '2016-10-03T19:52:55.000Z',
-      revokedAddresses: []
+  beforeAll(function () {
+    vi.mock('@blockcerts/explorer-lookup', async (importOriginal) => {
+      const original = await importOriginal();
+
+      return {
+        ...original,
+        request: async function ({ url }) {
+          if (url === 'http://www.blockcerts.org/mockissuer/issuer/got-issuer_live.json') {
+            return JSON.stringify(fixtureIssuerProfile);
+          }
+        },
+        lookForTx: () => ({
+          remoteHash: '68f3ede17fdb67ffd4a5164b5687a71f9fbb68da803b803935720f2aa38f7728',
+          issuingAddress: '1Q3P94rdNyftFBEKiN1fxmt2HnQgSCB619',
+          time: '2016-10-03T19:52:55.000Z',
+          revokedAddresses: [
+            '1AAGG6jirbu9XwikFpkHokbbiYpjVtFe1G',
+            '1K4P4LKXWZZ5bS2i34zLaJkHxbFBreDoTa',
+            '18AaFyeWmsasbSh2GsjGTtrNHqiJgsN6nB',
+            '16wyA4kLFiaQSEE9xZEFTEMXTzWsGf4Zki',
+            '1PrmJ6pGbfe4ucNCVbe4tbXRRHMsDDSxvY',
+            '1Q3P94rdNyftFBEKiN1fxmt2HnQgSCB619'
+          ]
+        })
+      };
     });
   });
 
-  afterEach(function () {
-    sinon.restore();
+  afterAll(function () {
+    vi.restoreAllMocks();
   });
 
   it('should have called the verification callback with the steps information', async function () {

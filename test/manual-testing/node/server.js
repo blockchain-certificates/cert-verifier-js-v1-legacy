@@ -1,9 +1,10 @@
-import express from 'express';
-import {json} from 'body-parser';
-import {Certificate} from '../../../dist/verifier-node';
+/* eslint @typescript-eslint/no-require-imports: 0 */
+const express = require('express');
+const bodyParser = require('body-parser');
+const { Certificate } = require('../../../dist/verifier-node');
 
 const server = express();
-server.use(json({limit: '5mb'}));
+server.use(bodyParser.json({ limit: '5mb' }));
 
 const port = 4000;
 

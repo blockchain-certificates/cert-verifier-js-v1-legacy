@@ -1,6 +1,7 @@
 import jsonld from 'jsonld';
 import VerifierError from '../models/verifierError';
-import sha256 from 'sha256';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { Buffer } from 'buffer';
 import { preloadedContexts } from '../constants';
 import { toUTF8Data } from '../helpers/data';
 import { getText } from '../domain/i18n/useCases';
@@ -11,8 +12,8 @@ export function getUnmappedFields (normalized: string): string[] | null {
   const normalizedArray = normalized.split('\n');
   const myRegexp = /<http:\/\/fallback\.org\/(.*)>/;
   const matches = normalizedArray
-    .map(normalizedString => myRegexp.exec(normalizedString))
-    .filter(match => match != null);
+      .map(normalizedString => myRegexp.exec(normalizedString))
+      .filter(match => match != null);
   if (matches.length > 0) {
     const unmappedFields = matches.map(match => match[1]).sort(); // only return name of unmapped key
     return Array.from(new Set(unmappedFields)); // dedup
@@ -85,10 +86,10 @@ export default async function computeLocalHash (document: Blockcerts): Promise<s
   const unmappedFields: string[] = getUnmappedFields(normalizedDocument);
   if (unmappedFields) {
     throw new VerifierError(
-      'computeLocalHash',
-      `${getText('errors', 'foundUnmappedFields')}: ${unmappedFields.join(', ')}`
+        'computeLocalHash',
+        `${getText('errors', 'foundUnmappedFields')}: ${unmappedFields.join(', ')}`
     );
   } else {
-    return sha256(toUTF8Data(normalizedDocument));
+    return Buffer.from(sha256(Uint8Array.from(toUTF8Data(normalizedDocument)))).toString('hex');
   }
 }

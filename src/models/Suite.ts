@@ -3,20 +3,19 @@ import type { Receipt } from './Receipt';
 import type { Blockcerts } from './Blockcerts';
 import type { ExplorerAPI, IBlockchainObject } from '@blockcerts/explorer-lookup';
 import type { Issuer } from './Issuer';
-import type { VCProof } from './BlockcertsV3';
 import type { MerkleProof2017 } from './MerkleProof2017';
 
 export interface SuiteAPI {
   executeStep: (step: string, action: () => any, verificationSuite?: string) => Promise<any>;
   document: Blockcerts;
   explorerAPIs?: ExplorerAPI[];
-  proof: VCProof | MerkleProof2017;
+  proof: MerkleProof2017;
   issuer: Issuer;
 }
 
 export abstract class Suite {
   abstract type: string;
-   
+
   constructor (props: SuiteAPI) {}
   // a hook that will be called when the Certificate is being initialized too. A chance to do async operations
   // after instantiation

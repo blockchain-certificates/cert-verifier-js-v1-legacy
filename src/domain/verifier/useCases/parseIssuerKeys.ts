@@ -22,7 +22,7 @@ export default function parseIssuerKeys (issuerProfileJson: Issuer): IssuerPubli
     const keyMap: IssuerPublicKeyList = {};
     if ('@context' in issuerProfileJson) {
       // backcompat for v2 alpha
-      const responseKeys = issuerProfileJson.publicKey ?? issuerProfileJson.publicKeys;
+      const responseKeys = issuerProfileJson.publicKey;
       for (let i = 0; i < responseKeys.length; i++) {
         const key = createKeyObject(responseKeys[i]);
         keyMap[key.publicKey] = key;

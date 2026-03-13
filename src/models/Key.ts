@@ -1,8 +1,6 @@
 import type { NullableNumber, NullableString } from './helpers';
-import type { ParsedKeyObjectV2 } from './Issuer';
 
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
-export default class Key implements ParsedKeyObjectV2 {
+export default class Key {
   public publicKey: NullableString;
   public created: NullableNumber;
   public revoked: NullableNumber;

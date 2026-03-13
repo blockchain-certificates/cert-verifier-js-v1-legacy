@@ -6,7 +6,7 @@ export default function getSignatureImages (signatureRawObject, version?: CERTIF
   const signatureImageObjects = [];
   if (version === CERTIFICATE_VERSIONS.V1_1 || version === CERTIFICATE_VERSIONS.V1_2) {
     if (Array.isArray(signatureRawObject)) {
-      // eslint-disable-next-line @typescript-eslint/no-for-in-array
+       
       for (const index in signatureRawObject) {
         const signatureLine = signatureRawObject[index];
         const jobTitle = 'jobTitle' in signatureLine ? signatureLine.jobTitle : null;

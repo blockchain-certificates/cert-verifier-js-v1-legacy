@@ -1,26 +1,9 @@
-import type { IDidDocument } from './DidDocument';
-import type { IDidDocumentPublicKey } from '@decentralized-identity/did-common-typescript';
-
-export type IssuerPublicKeyList = Record<string, ParsedKeyObjectV2>;
+export type IssuerPublicKeyList = Record<string, any>;
 
 export interface KeyObjectV1 {
   date: string;
   key: string;
   invalidated?: string;
-}
-
-export interface ParsedKeyObjectV2 {
-  publicKey: string;
-  created: number;
-  expires?: number;
-  revoked?: number;
-}
-
-export interface KeyObjectV2 {
-  id: string;
-  created: string;
-  expires?: string;
-  revoked?: string;
 }
 
 export interface Issuer {
@@ -32,7 +15,7 @@ export interface Issuer {
   image?: string;
   email?: string;
   revocationList?: string;
-  publicKey?: string[] | KeyObjectV2[];
+  publicKey?: string[];
   introductionURL?: string;
   introductionAuthenticationMethod?: string;
   introductionSuccessURL?: string;
@@ -40,12 +23,6 @@ export interface Issuer {
   analyticsURL?: string;
   issuingEstimateAuth?: string;
   issuingEstimateUrl?: string;
-  // blockcerts v3
-  didDocument?: IDidDocument;
-  verificationMethod?: IDidDocumentPublicKey[];
-
-  // blockcerts v2-alpha
-  publicKeys?: string[] | KeyObjectV2[];
 
   // blockcerts v1
   // https://github.com/blockchain-certificates/cert-schema/blob/master/cert_schema/1.1/issuer-schema-v1-1.json

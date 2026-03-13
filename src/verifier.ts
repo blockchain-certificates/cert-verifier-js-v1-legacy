@@ -6,7 +6,6 @@ import { difference } from './helpers/array';
 import type { ExplorerAPI, TransactionData } from '@blockcerts/explorer-lookup';
 import type { Blockcerts } from './models/Blockcerts';
 import type { Issuer } from './models/Issuer';
-import type { VCProof } from './models/BlockcertsV3';
 import type { IVerificationMapItem, IVerificationMapItemSuite } from './models/VerificationMap';
 import type { Suite, SuiteAPI } from './models/Suite';
 import type VerificationSubstep from './domain/verifier/valueObjects/VerificationSubstep';
@@ -21,7 +20,7 @@ export interface IVerificationStepCallbackAPI {
 }
 
 export type IVerificationStepCallbackFn = (update: IVerificationStepCallbackAPI) => any;
-type TVerifierProofMap = Map<number, VCProof>;
+type TVerifierProofMap = Map<number, any>;
 
 export interface IFinalVerificationStatus {
   code: VerificationSteps.final;
@@ -314,7 +313,7 @@ export default class Verifier {
         message = {
           ...domain.i18n.getComposedText('success', 'generic'),
           description: domain.i18n.getComposedText('success', 'generic').description
-            // eslint-disable-next-line no-template-curly-in-string
+
             .replace('${SIGNATURE_TYPE}', this.proofVerifiers[0].type)
         };
       }

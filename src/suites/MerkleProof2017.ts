@@ -6,7 +6,6 @@ import type { Blockcerts } from '../models/Blockcerts';
 import type { ExplorerAPI, TransactionData, IBlockchainObject } from '@blockcerts/explorer-lookup';
 import type { Receipt } from '../models/Receipt';
 import type { Issuer, IssuerPublicKeyList } from '../models/Issuer';
-import type { BlockcertsV2 } from '../models/BlockcertsV2';
 import type VerificationSubstep from '../domain/verifier/valueObjects/VerificationSubstep';
 import type { SuiteAPI } from '../models/Suite';
 import type { MerkleProof2017 as TMerkleProof2017 } from '../models/MerkleProof2017';
@@ -57,13 +56,13 @@ export default class MerkleProof2017 extends Suite {
     this.issuer = props.issuer;
     this.proof = props.proof as TMerkleProof2017;
     this.validateProofType();
-    this.receipt = (this.documentToVerify as BlockcertsV2).signature ?? this.documentToVerify.receipt;
+    this.receipt = this.documentToVerify.signature ?? this.documentToVerify.receipt;
     this.chain = domain.certificates.getChain('', this.receipt);
     this.transactionId = domain.certificates.getTransactionId(this.receipt);
     this.adaptVerificationProcessToChain();
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
+
   async init (): Promise<void> {}
 
   async verifyProof (): Promise<void> {
@@ -76,7 +75,7 @@ export default class MerkleProof2017 extends Suite {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
+
   async verifyIdentity (): Promise<void> {}
 
   getProofVerificationSteps (parentStepKey): VerificationSubstep[] {

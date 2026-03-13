@@ -1,4 +1,5 @@
-import sha256 from 'sha256';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { Buffer } from 'buffer';
 import VerifierError from '../models/verifierError';
 import { toByteArray } from '../helpers/data';
 import { getText } from '../domain/i18n/useCases';
@@ -12,35 +13,34 @@ export default function ensureValidReceipt (receipt: Receipt): void {
     const proof = receipt.proof ?? receipt.path;
     const isProof = !!proof;
     if (isProof) {
-      // eslint-disable-next-line @typescript-eslint/no-for-in-array
       for (const index in proof) {
         const node = proof[index];
         let appendedBuffer;
         if (typeof node.left !== 'undefined') {
           appendedBuffer = toByteArray(`${node.left}${proofHash}`);
-          proofHash = sha256(appendedBuffer);
+          proofHash = Buffer.from(sha256(Uint8Array.from(appendedBuffer))).toString('hex');
         } else if (typeof node.right !== 'undefined') {
           appendedBuffer = toByteArray(`${proofHash}${node.right}`);
-          proofHash = sha256(appendedBuffer);
+          proofHash = Buffer.from(sha256(Uint8Array.from(appendedBuffer))).toString('hex');
         } else {
           throw new VerifierError(
-            'checkReceipt',
-            'Trigger catch error.'
+              'checkReceipt',
+              'Trigger catch error.'
           );
         }
       }
     }
   } catch (e) {
     throw new VerifierError(
-      'checkReceipt',
-      getText('errors', 'ensureValidReceipt')
+        'checkReceipt',
+        getText('errors', 'ensureValidReceipt')
     );
   }
 
   if (proofHash !== merkleRoot) {
     throw new VerifierError(
-      'checkReceipt',
-      getText('errors', 'invalidMerkleReceipt')
+        'checkReceipt',
+        getText('errors', 'invalidMerkleReceipt')
     );
   }
 }

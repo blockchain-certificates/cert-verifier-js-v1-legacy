@@ -1,6 +1,7 @@
+/* eslint @typescript-eslint/no-require-imports: 0 */
 const express = require('express');
 const bodyParser = require('body-parser');
-const certVerifierJs = require('../../../dist/verifier-node');
+const { Certificate } = require('../../../dist/verifier-node');
 
 const server = express();
 server.use(bodyParser.json({ limit: '5mb' }));
@@ -11,7 +12,7 @@ server.post('/verification', async (req, res) => {
   if (req.body.blockcerts) {
     const blockcertsData = req.body.blockcerts;
     try {
-      const certificate = new certVerifierJs.Certificate(blockcertsData);
+      const certificate = new Certificate(blockcertsData);
       await certificate.init();
       await certificate
         .verify()

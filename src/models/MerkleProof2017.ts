@@ -1,10 +1,8 @@
-import type { MerklePath } from './MerkleProof2019';
-
 export interface MerkleProof2017 {
   type: string[];
   merkleRoot: string;
   targetHash: string;
-  proof: MerklePath[];
+  proof: any[];
   anchors: MerkleProof2017Anchor[];
 }
 

@@ -1,9 +1,9 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const certVerifierJs = require('../../../dist/verifier-node');
+import express from 'express';
+import {json} from 'body-parser';
+import {Certificate} from '../../../dist/verifier-node';
 
 const server = express();
-server.use(bodyParser.json({ limit: '5mb' }));
+server.use(json({limit: '5mb'}));
 
 const port = 4000;
 
@@ -11,7 +11,7 @@ server.post('/verification', async (req, res) => {
   if (req.body.blockcerts) {
     const blockcertsData = req.body.blockcerts;
     try {
-      const certificate = new certVerifierJs.Certificate(blockcertsData);
+      const certificate = new Certificate(blockcertsData);
       await certificate.init();
       await certificate
         .verify()

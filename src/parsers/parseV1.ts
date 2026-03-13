@@ -25,6 +25,7 @@ export default async function parseV1 (certificateJson): Promise<BlockcertsV1> {
   const receipt = certificateJson.receipt;
   const version = typeof receipt === 'undefined' ? CERTIFICATE_VERSIONS.V1_1 : CERTIFICATE_VERSIONS.V1_2;
 
+  // eslint-disable-next-line prefer-const
   let { image: certificateImage, description, issuer: issuerInfo, subtitle } = fullCertificateObject;
 
   const publicKey = recipient.publicKey;

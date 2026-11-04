@@ -2,7 +2,6 @@ import serve from 'rollup-plugin-serve';
 import resolve from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
 import livereload from 'rollup-plugin-livereload';
-import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 import globals from 'rollup-plugin-node-globals';
 import builtins from 'rollup-plugin-node-builtins';
@@ -21,7 +20,6 @@ export default [
       }
     ],
     plugins: [
-      commonjs(),
       json(),
       globals(),
       builtins(),

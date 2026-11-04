@@ -3,13 +3,7 @@ import { Certificate } from '../../../src';
 import mainnetMapAssertion from '../../assertions/verification-steps-v1-mainnet';
 import fixtureIssuerProfile from '../../fixtures/v1/got-issuer_live.json';
 
-describe('Certificate entity test suite', function () {
-  describe('constructor method', function () {
-    describe('given it is called with valid v1 certificate data', function () {
-      let certificate;
-
-      beforeAll(async function () {
-        vi.mock('@blockcerts/explorer-lookup', async (importOriginal) => {
+vi.mock('@blockcerts/explorer-lookup', async (importOriginal) => {
           const original = await importOriginal();
 
           return {
@@ -22,6 +16,12 @@ describe('Certificate entity test suite', function () {
           };
         });
 
+describe('Certificate entity test suite', function () {
+  describe('constructor method', function () {
+    describe('given it is called with valid v1 certificate data', function () {
+      let certificate;
+
+      beforeAll(async function () {
         certificate = new Certificate(fixture);
         await certificate.init();
       });

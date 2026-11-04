@@ -2,14 +2,7 @@ import Certificate from '../../src/certificate';
 import BlockcertsV1 from '../fixtures/v1/mainnet-valid-1.2.json';
 import fixtureIssuerProfile from '../fixtures/v1/got-issuer_live.json';
 
-describe('End-to-end i18n test suite', function () {
-  describe('given the language is set to spanish', function () {
-    let certificate;
-    let verificationResult;
-
-    beforeAll(async function () {
-      beforeAll(function () {
-        vi.mock('@blockcerts/explorer-lookup', async (importOriginal) => {
+vi.mock('@blockcerts/explorer-lookup', async (importOriginal) => {
           const original = await importOriginal();
 
           return {
@@ -34,7 +27,13 @@ describe('End-to-end i18n test suite', function () {
             })
           };
         });
-      });
+
+describe('End-to-end i18n test suite', function () {
+  describe('given the language is set to spanish', function () {
+    let certificate;
+    let verificationResult;
+
+    beforeAll(async function () {
       certificate = new Certificate(BlockcertsV1, { locale: 'es' });
       await certificate.init();
       verificationResult = await certificate.verify();

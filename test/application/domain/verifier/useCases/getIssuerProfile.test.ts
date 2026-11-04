@@ -4,9 +4,7 @@ import fixtureV1 from '../../../../fixtures/v1/mainnet-valid-1.2.json';
 
 let explorerLookup;
 
-beforeAll(async function () {
-  beforeAll(function () {
-    vi.mock('@blockcerts/explorer-lookup', async (importOriginal) => {
+vi.mock('@blockcerts/explorer-lookup', async (importOriginal) => {
       const original = await importOriginal();
 
       return {
@@ -31,8 +29,8 @@ beforeAll(async function () {
         })
       };
     });
-  });
 
+beforeAll(async function () {
   explorerLookup = await import('@blockcerts/explorer-lookup');
 });
 

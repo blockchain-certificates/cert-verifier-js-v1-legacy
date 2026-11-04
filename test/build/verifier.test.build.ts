@@ -22,14 +22,14 @@ describe('verifier build test suite', function () {
   });
 
   it('does not support v2 verification', async function () {
-    expect(async () => {
+    await expect(async () => {
       const certificate = new verifier.Certificate(v2Fixture);
       await certificate.init();
     }).rejects.toThrow('not supported');
   });
 
   it('does not support v3 verification', async function () {
-    expect(async () => {
+    await expect(async () => {
       const certificate = new verifier.Certificate(v3Fixture);
       await certificate.init();
     }).rejects.toThrow('not supported');

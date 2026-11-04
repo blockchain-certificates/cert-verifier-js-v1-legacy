@@ -2,9 +2,7 @@ import Verifier from '../../../src/verifier';
 import fixtureV1 from '../../fixtures/v1/mainnet-valid-1.2.json';
 import fixtureIssuerProfile from '../../fixtures/v1/got-issuer_live.json';
 
-describe('Verifier checkRevokedStatus method test suite', function () {
-  beforeAll(function () {
-    vi.mock('@blockcerts/explorer-lookup', async (importOriginal) => {
+vi.mock('@blockcerts/explorer-lookup', async (importOriginal) => {
       const original = await importOriginal();
 
       return {
@@ -29,8 +27,8 @@ describe('Verifier checkRevokedStatus method test suite', function () {
         })
       };
     });
-  });
 
+describe('Verifier checkRevokedStatus method test suite', function () {
   afterAll(function () {
     vi.restoreAllMocks();
   });

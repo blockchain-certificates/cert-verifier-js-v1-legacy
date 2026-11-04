@@ -3,13 +3,7 @@ import { Certificate } from '../../src';
 import fixtureV1 from '../fixtures/v1/mainnet-valid-1.2.json';
 import fixtureIssuerProfile from '../fixtures/v1/got-issuer_live.json';
 
-describe('Certificate API Contract test suite', function () {
-  describe('signers property', function () {
-    describe('given there is only one signature to the blockcerts document', function () {
-      let instance;
-
-      beforeAll(async function () {
-        vi.mock('@blockcerts/explorer-lookup', async (importOriginal) => {
+vi.mock('@blockcerts/explorer-lookup', async (importOriginal) => {
           const original = await importOriginal();
 
           return {
@@ -35,6 +29,12 @@ describe('Certificate API Contract test suite', function () {
           };
         });
 
+describe('Certificate API Contract test suite', function () {
+  describe('signers property', function () {
+    describe('given there is only one signature to the blockcerts document', function () {
+      let instance;
+
+      beforeAll(async function () {
         instance = new Certificate(fixtureV1);
         await instance.init();
         await instance.verify();

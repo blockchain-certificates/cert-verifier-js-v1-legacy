@@ -9,8 +9,7 @@ import type { ExplorerAPI } from '@blockcerts/explorer-lookup';
 import fixtureV1 from '../../fixtures/v1/mainnet-valid-1.2.json';
 import fixtureV1IssuerProfile from '../../fixtures/v1/got-issuer_live.json';
 
-beforeAll(async function () {
-  vi.mock('@blockcerts/explorer-lookup', async (importOriginal) => {
+vi.mock('@blockcerts/explorer-lookup', async (importOriginal) => {
     const original = await importOriginal();
 
     return {
@@ -22,7 +21,6 @@ beforeAll(async function () {
       }
     };
   });
-});
 
 afterAll(function () {
   vi.restoreAllMocks();

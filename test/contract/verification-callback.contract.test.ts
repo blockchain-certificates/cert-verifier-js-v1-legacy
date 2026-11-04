@@ -3,9 +3,7 @@ import type { IVerificationStepCallbackAPI } from '../../src/verifier';
 import BlockcertsV1 from '../fixtures/v1/mainnet-valid-1.2.json';
 import fixtureIssuerProfile from '../fixtures/v1/got-issuer_live.json';
 
-describe('when the certificate verified', function () {
-  beforeAll(function () {
-    vi.mock('@blockcerts/explorer-lookup', async (importOriginal) => {
+vi.mock('@blockcerts/explorer-lookup', async (importOriginal) => {
       const original = await importOriginal();
 
       return {
@@ -30,8 +28,8 @@ describe('when the certificate verified', function () {
         })
       };
     });
-  });
 
+describe('when the certificate verified', function () {
   afterAll(function () {
     vi.restoreAllMocks();
   });

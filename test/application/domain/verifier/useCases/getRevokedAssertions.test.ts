@@ -7,9 +7,7 @@ const issuerIdFixtureWithRevokedAssertions = 'http://domain.tld/with-revoked-ass
 const issuerIdFixtureRejects = 'http://domain.tld/rejects';
 const errorMessageAssertion = 'Unable to get revocation assertions';
 
-describe('Verifier domain getRevokedAssertions use case test suite', function () {
-  beforeAll(function () {
-    vi.mock('@blockcerts/explorer-lookup', async (importOriginal) => {
+vi.mock('@blockcerts/explorer-lookup', async (importOriginal) => {
       const explorerLookup = await importOriginal();
       return {
         ...explorerLookup,
@@ -31,8 +29,8 @@ describe('Verifier domain getRevokedAssertions use case test suite', function ()
         }
       };
     });
-  });
 
+describe('Verifier domain getRevokedAssertions use case test suite', function () {
   afterAll(function () {
     vi.restoreAllMocks();
   });

@@ -2,9 +2,7 @@ import { Certificate, VERIFICATION_STATUSES } from '../../../src';
 import fixtureIssuerProfile from '../../fixtures/v1/got-issuer_live.json';
 import fixtureBlockcertsV1 from '../../fixtures/v1/mainnet-valid-1.2.json';
 
-describe('given the certificate is a valid testnet (v1.2)', function () {
-  beforeAll(function () {
-    vi.mock('@blockcerts/explorer-lookup', async (importOriginal) => {
+vi.mock('@blockcerts/explorer-lookup', async (importOriginal) => {
       const original = await importOriginal();
 
       return {
@@ -29,8 +27,8 @@ describe('given the certificate is a valid testnet (v1.2)', function () {
         })
       };
     });
-  });
 
+describe('given the certificate is a valid testnet (v1.2)', function () {
   afterAll(function () {
     vi.restoreAllMocks();
   });

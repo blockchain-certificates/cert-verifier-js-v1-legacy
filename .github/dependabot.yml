@@ -19,9 +19,6 @@ updates:
   - dependency-name: rollup
     versions:
     - 2.42.4
-  - dependency-name: karma
-    versions:
-    - 6.3.0
   - dependency-name: jsonld
     versions:
     - 3.3.0

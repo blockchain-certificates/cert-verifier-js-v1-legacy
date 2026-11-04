@@ -1,4 +1,14 @@
 /* eslint no-undef: 0 */
+import fs from 'fs';
+import path from 'path';
+
+function loadIife (file: string, globalName: string): any {
+  const code = fs.readFileSync(path.resolve(__dirname, file), 'utf8');
+  return new Function(`${code}\nreturn ${globalName};`)();
+}
+
+const mockXHR = loadIife('./mocks/FakeXmlHttpRequest.iife.js', 'mockXHR');
+const Verifier = loadIife('../../dist/verifier-iife.js', 'Verifier');
 const fixtureV1 = {
   receipt: {
     merkleRoot: '68f3ede17fdb67ffd4a5164b5687a71f9fbb68da803b803935720f2aa38f7728',
@@ -114,7 +124,6 @@ const fixtureV3 = {
   }
 };
 
-// @ts-expect-error we just mock the thing
 window.XMLHttpRequest = mockXHR.FakeXmlHttpRequest;
 
 describe('verifier build test suite', function () {
@@ -137,8 +146,7 @@ describe('verifier build test suite', function () {
       await certificate.init();
     }
 
-    await expectAsync(initV2Cert())
-      .toBeRejectedWith(new Error('The verification of a Blockcerts v2 or v3 is not supported by this library which is only a legacy support for Blockcerts v1. Please use @blockcerts/cert-verifier-js for modern versions.'));
+    await expect(initV2Cert()).rejects.toThrow('The verification of a Blockcerts v2 or v3 is not supported by this library which is only a legacy support for Blockcerts v1. Please use @blockcerts/cert-verifier-js for modern versions.');
   });
 
   it('throws an error with a v3 certificate', async function () {
@@ -147,7 +155,6 @@ describe('verifier build test suite', function () {
       await certificate.init();
     }
 
-    await expectAsync(initV3Cert())
-      .toBeRejectedWith(new Error('The verification of a Blockcerts v2 or v3 is not supported by this library which is only a legacy support for Blockcerts v1. Please use @blockcerts/cert-verifier-js for modern versions.'));
+    await expect(initV3Cert()).rejects.toThrow('The verification of a Blockcerts v2 or v3 is not supported by this library which is only a legacy support for Blockcerts v1. Please use @blockcerts/cert-verifier-js for modern versions.');
   });
 });
